@@ -20,9 +20,10 @@
 
 ## 🛠️ 技术栈 (Tech Stack)
 
-- **前端核心**：Vanilla HTML5 / CSS3 / Vanilla JavaScript (ES6+)
-- **音频控制**：HTML5 Audio API
-- **排版字体**：使用高拟真像素字体，还原车内 LED 屏视觉体验
+- **Markup & Layout**: HTML5, CSS3 (CSS Grid, Flexbox)
+- **Scripting**: Native JavaScript (ES6+)
+- **Font**: 定制化数码管/点阵字体 (FZXS)
+- **Audio**：HTML5 Audio API
 
 ## 🤝 贡献与反馈 (Contribution)
 欢迎广大地铁爱好者和开发者一起完善本项目！
