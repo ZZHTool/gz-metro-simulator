@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>广州地铁报站模拟器 | Guangzhou Metro Announcement Simulator</title>
+    <meta name="description" content="广州地铁报站模拟器，支持广州地铁各线路报站文字模拟、LED显示屏模拟、运行方向切换及站点切换，为地铁爱好者提供真实的广州地铁广播体验。">
+    <meta name="keywords" content="广州地铁,地铁,报站,广州地铁报站,地铁模拟,广州地铁模拟器,地铁广播,Metro Simulator,Guangzhou Metro,GZMetro">
+    <meta name="author" content="ZZH">
+    <meta name="robots" content="index,follow">
+    <meta property="og:title" content="广州地铁报站模拟器">
+    <meta property="og:description" content="广州地铁广播模拟器，支持全线路LED报站模拟。">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#005BAC">
+    <meta name="google-site-verification" content="bxVKk7PI8RNuhaSiJKl6OS4bmSGCY_4pBnvje4ySeZE" />
+    <meta name="yandex-verification" content="476a36694c6fb381" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="GZMetro.ico" type="image/x-icon">
+</head>
+<body class="no-scroll">
+    <div id="welcome-screen" class="welcome-screen">
+        <div class="welcome-content-box">
+            <img src="GZMetro.svg" alt="Guangzhou Metro Logo" class="welcome-logo-center">
+            <div class="welcome-text-animated">
+                <h1 class="welcome-title">广州地铁报站模拟器</h1>
+                <div class="welcome-prompt">点击任意位置进入</div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div id="portal-view" class="view active">
+            <header>
+                <img src="GZMetro.svg" alt="Guangzhou Metro Logo" class="metro-logo">
+                <h1>广州地铁报站模拟器</h1>
+            </header>
+            <div class="home-intro">
+                <p class="intro-title">
+                    欢迎使用广州地铁报站模拟器
+                </p>
+                <p class="intro-desc">
+                    本站模拟广州地铁列车广播及 LED 显示系统，
+                    支持多条线路、运行方向切换、站点选择及换乘信息显示，
+                    为地铁爱好者提供更加真实的体验。
+                </p>
+                <div class="intro-feature">
+                    <span>🚇 全线路支持</span>
+                    <span>📢 广播模拟</span>
+                    <span>📺 LED显示</span>
+                    <span>🔁 环线方向</span>
+                </div>
+                <button id="btn-about" class="btn-about">
+                    关于本站
+                </button>
+            </div>
+            <main>
+                <div class="line-grid" id="line-grid">
+                </div>
+            </main>
+        </div>
+        <div id="about-view" class="view">
+
+            <header class="main-header">
+                <button id="btn-about-back" class="btn-back">
+                    ⬅ 返回首页
+                </button>
+                <img src="GZMetro.svg" class="metro-logo">
+                <h1>关于本站</h1>
+            </header>
+            <main>
+                <section class="about-card">
+                    <h2>广州地铁报站模拟器</h2>
+                    <p>
+                        <strong>广州地铁报站模拟器网页版</strong>（Guangzhou Metro Announcement Simulator Web）是一款由地铁爱好者为广大同好打造的纯前端交互项目。
+                        我们致力于 100% 还原广州地铁列车的车内广播与 LED 走字屏。
+                    </p>
+                    <p>
+                        本模拟器支持<strong>广州地铁1号线、2号线、3号线、4号线、5号线</strong>等各大主力线路的报站模拟。
+                        无论您是想体验经典列车的“下一站是...（The next station is...）”粤普英三语广播，还是想模拟车门上方 LED 屏幕的滚动字幕、换乘路线提示，都可以在本站一键体验。
+                    </p>
+                    <p>
+                        相比传统的 Windows 客户端，本站采用纯 HTML5 / CSS3 / JavaScript 技术开发，<strong>完全免下载，无病毒误报，完美自适应手机和电脑端</strong>，随时随地在浏览器中即可畅玩。
+                    </p>
+                    <h3>主要功能</h3>
+                    <ul>
+                        <li>✔ 广州地铁线路浏览</li>
+                        <li>✔ 下一站广播模拟</li>
+                        <li>✔ LED滚动字幕模拟</li>
+                        <li>✔ 换乘信息提示</li>
+                        <li>✔ 环线方向切换</li>
+                        <li>✔ 不同线路主题颜色</li>
+                    </ul>
+                    <h3>开发者</h3>
+                    <p>ZZH</p>
+                    <p>作者邮箱：<i class="email">zzh19526308283@outlook.com</i></p>
+                    <h3>项目说明</h3>
+                    <p>本站为个人非商业项目，仅供学习、研究及交流使用，所使用的地铁广播音频为ZZH录制，与广州地铁集团有限公司无任何关联。广州地铁名称、标识及相关商标归其权利人所有。</p>
+                </section>
+            </main>
+        </div>
+        <footer class="site-footer" style="display: none;">
+            <div class="footer-content">
+                <p>
+                    本站已稳定运行
+                    <b style="color: #00ff88;">
+                        <strong id="stable-days">0</strong>
+                    </b>
+                    天
+                </p>
+                <p class="footer-copyright">
+                    &copy; 2026 <a href="https://zzhtool.github.io" target="_blank">ZZH</a>. All Rights Reserved.
+                </p>
+                <p>作者邮箱：<i class="email">zzh19526308283@outlook.com</i></p>
+                <p class="footer-disclaimer">
+                    <strong>免责声明：</strong>本站为个人非商业项目，仅供学习、研究及交流使用，所使用的地铁广播音频为ZZH录制，与广州地铁集团有限公司无任何关联。广州地铁名称、标识及相关商标归其权利人所有。如权利人认为本站内容存在侵权，请联系作者处理。
+                </p>
+            </div>
+        </footer>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
