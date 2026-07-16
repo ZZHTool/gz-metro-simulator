@@ -3,7 +3,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/zzhtool/gz-metro-simulator.svg)](https://github.com/zzhtool/gz-metro-simulator/stargazers)
 [![License](https://img.shields.io/github/license/zzhtool/gz-metro-simulator.svg)](LICENSE)
 
-一款基于纯前端（HTML5 / CSS3 / JavaScript）开发的**广州地铁报站模拟器**。专为地铁爱好者打造，100% 还原广州地铁列车广播与 LED 显示屏滚动效果！
+一款基于纯前端（HTML5 / CSS3 / JavaScript）开发的**广州地铁报站模拟器**。专为地铁爱好者打造，还原广州地铁列车广播与 LED 显示屏滚动效果！
 
 > 📢 **免下载，即点即用！** 完美适配手机端与电脑端。
 > 👉 **[点击立即在线体验 🔗](https://gzmetro.netlify.app)**
