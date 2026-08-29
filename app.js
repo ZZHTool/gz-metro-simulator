@@ -166,15 +166,45 @@ if (welcomeScreen) {
 // 运行天数计算
 function updateRunningDays() {
     if (!daysElement) return;
-    const urodz = new Date("07/15/2026");
+    const urodz = new Date("07/17/2026");
     const now = new Date();
     const ile = now.getTime() - urodz.getTime();
     const dni = Math.floor(ile / (1000 * 60 * 60 * 24));
     daysElement.textContent = dni >= 0 ? dni : 0;
 }
 
-// 初始化首
+// 初始化
 document.addEventListener('DOMContentLoaded', () => {
     renderLineGrid();
     updateRunningDays();
 });
+
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+});
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'F12') {
+        event.preventDefault();
+    }
+    if (event.ctrlKey && event.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(event.key)) {
+        event.preventDefault();
+    }
+    if (event.ctrlKey && (event.key === 'u' || event.key === 'U')) {
+        event.preventDefault();
+    }
+    if (event.ctrlKey && (event.key === 's' || event.key === 'S')) {
+        event.preventDefault();
+    }
+});
+setInterval(() => {
+    function check() {
+        return false;
+    }
+    (function () {
+        if (check()) {
+            return;
+        } else {
+            (function () { }.constructor("debugger")());
+        }
+    })();
+}, 100);

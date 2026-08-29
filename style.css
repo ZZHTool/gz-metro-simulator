@@ -9,8 +9,8 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background-color: #f4f6f9;
     margin: 0;
-    padding: 20px;
-    min-width: 400px;
+    padding: 12px;
+    box-sizing: border-box;
 }
 
     body.no-scroll {
@@ -26,13 +26,15 @@ body {
     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     overflow: hidden;
     margin: 0 auto;
+    box-sizing: border-box;
 }
 
     .container:has(#simulator-view.active) {
         max-width: 800px;
-        min-width: 400px;
+        min-width: 350px;
         width: 100%;
         overflow: visible;
+        box-sizing: border-box;
     }
 
 @media (min-width: 400px) {
@@ -173,18 +175,24 @@ main {
     margin-bottom: 15px;
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
     .form-group label {
         width: 100px;
         font-weight: bold;
+        flex-shrink: 0;
     }
 
     .form-group select {
         flex: 1;
+        min-width: 120px;
+        max-width: 100%;
         padding: 8px;
         border-radius: 4px;
         border: 1px solid #ccc;
+        box-sizing: border-box;
     }
 
 .button-group {
@@ -295,7 +303,120 @@ main {
         transform: translateY(0);
         box-shadow: 0 3px 8px rgba(0, 91, 172, 0.2);
     }
+.about-badges {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
 
+    .about-badges img {
+        height: 20px;
+        border-radius: 3px;
+    }
+
+.about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin: 25px 0;
+}
+
+.about-grid-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 18px;
+}
+
+    .about-grid-item h3 {
+        margin-top: 0 !important;
+        color: #005BAC;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 8px;
+        font-size: 16px;
+    }
+
+    .about-grid-item ul {
+        padding-left: 18px;
+        margin-bottom: 0;
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+.about-divider {
+    border: 0;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 30px 0;
+}
+
+/* 时间轴样式 */
+.timeline {
+    border-left: 2px solid #e2e8f0;
+    padding-left: 15px;
+    margin: 15px 0;
+}
+
+.timeline-item {
+    margin-bottom: 12px;
+    position: relative;
+    font-size: 13.5px;
+}
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -20px;
+        top: 6px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #005BAC;
+    }
+
+.timeline-date {
+    font-weight: bold;
+    color: #005BAC;
+    margin-right: 10px;
+}
+
+/* 按钮样式 */
+.about-actions {
+    margin: 20px 0;
+}
+
+.btn-github-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #24292e;
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+    .btn-github-action:hover {
+        background-color: #1a1e22;
+    }
+
+.icon-git {
+    fill: currentColor;
+}
+
+.about-disclaimer {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #94a3b8;
+    background: #f8fafc;
+    border-left: 3px solid #cbd5e1;
+    padding: 10px 15px;
+    margin-top: 30px;
+}
 .about-card {
     max-width: 900px;
     margin: auto;
@@ -318,6 +439,38 @@ main {
     .about-card ul {
         padding-left: 22px;
     }
+
+.about-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 15px 0 25px 0;
+    font-size: 12px;
+}
+
+.version-tag {
+    background-color: #c70541;
+    color: #ffffff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.status-tag {
+    background-color: #e2e8f0;
+    color: #475569;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+    .status-tag.active {
+        background-color: #def7ec;
+        color: #03543f;
+    }
+
+.update-date {
+    color: #94a3b8;
+}
 
 .welcome-screen {
     position: fixed;

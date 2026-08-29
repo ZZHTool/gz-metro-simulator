@@ -4,6 +4,7 @@ const metroData = {
         color: "#edcf3b",
         textColor: "#000000",
         stations: ["西塱", "坑口", "花地湾", "芳村", "黄沙", "长寿路", "陈家祠", "西门口", "公园前", "农讲所", "烈士陵园", "东山口", "杨箕", "体育西路", "体育中心", "广州东站"],
+        stations_en: ["Xilang","Kengkou","Huadiwan","Fangcun","Huangsha","Changshou Road","Chen Clan Academy","Ximenkou","Gongyuanqian","Peasant Movement Institute","Martyrs' Park","Dongshankou","Yangji","Tiyu Xilu","Tianhe Sports Center","Guangzhou East Railway Station"],
         transfers: { "公园前": "2号线", "黄沙": "6号线", "陈家祠": "8号线", "东山口": "6号线", "杨箕": "5号线", "体育西路": "3号线", "广州东站": "3号线、11号线", "西塱": "10号线、22号线" }
     },
     "line2": {
@@ -102,7 +103,7 @@ const metroData = {
         transfers: { "嘉禾望岗": "2号线、3号线", "新和": "14号线支线" }
     },
     "line14_branch": {
-        name: "14号线支线 (知识城线)",
+        name: "14号线(知识城支线)",
         color: "#81312f",
         textColor: "#ffffff",
         stations: ["新和", "红卫", "新南", "枫下", "知识城", "何棠下", "旺村", "汤村", "镇龙北", "镇龙"],
@@ -141,7 +142,6 @@ const marqueeText = document.getElementById('marquee-text');
 const routeMap = document.getElementById('route-map');
 const daysElement = document.getElementById('stable-days');
 
-// 智能路由检测：自动通过网址判断当前属于哪条线路
 function detectLineFromUrl() {
     const path = window.location.pathname;
     const match = path.match(/\/([^\/]+)\/[^\/]*$/);
@@ -154,7 +154,6 @@ function detectLineFromUrl() {
     return 'line1';
 }
 
-// 自动检测并绑定返回首页按钮
 function initBackButton() {
     const btnBack = document.getElementById('btn-back');
     if (!btnBack) return;
@@ -174,7 +173,6 @@ function initBackButton() {
     });
 }
 
-// 音频播放函数
 function playAudio(srcs) {
     if (currentAudio) {
         currentAudio.pause();
@@ -185,11 +183,7 @@ function playAudio(srcs) {
     let currentIndex = 0;
     function playNext() {
         if (currentIndex < audioQueue.length) {
-            let audioSrc = audioQueue[currentIndex].startsWith('/')
-                ? audioQueue[currentIndex]
-                : `/${audioQueue[currentIndex]}`;
-
-            currentAudio = new Audio(audioSrc);
+            currentAudio = new Audio(audioQueue[currentIndex]);
 
             currentAudio.onended = () => {
                 currentIndex++;
@@ -197,7 +191,7 @@ function playAudio(srcs) {
             };
 
             currentAudio.play().catch(err => {
-                console.warn(`音频播放失败 [${audioSrc}]:`, err);
+                console.warn(`音频播放失败 [${audioQueue[currentIndex]}]:`, err);
                 currentIndex++;
                 playNext();
             });
@@ -206,15 +200,11 @@ function playAudio(srcs) {
     playNext();
 }
 
-// 初始化当前线路的模拟器界面
 function initSimulator(lineKey) {
     currentLineKey = lineKey;
     const line = metroData[lineKey];
-    // 动态同步 H1 标题
-    if (simTitle) {
-        simTitle.innerText = line.name;
-    }
-    // UI 主色调替换
+    simTitle.innerText = line.name;
+    document.title = `${line.name} - 广州地铁报站模拟器`;
     const logo = document.querySelector('.metro-logo');
     if (logo) {
         if (lineKey === 'line5' || lineKey === 'line6' || lineKey === 'line14' || lineKey === 'line14_branch' || lineKey === 'line22') {
@@ -297,12 +287,20 @@ function updateStations() {
         return;
     } else {
         stationList = [...line.stations];
+        let stationEnList = line.stations_en ? [...line.stations_en] : [];
         if (direction === "backward") {
             stationList.reverse();
+            if (stationEnList.length > 0) {
+                stationEnList.reverse();
+            }
         }
         for (let i = 0; i < stationList.length - 1; i++) {
             let opt = document.createElement('option');
-            opt.value = JSON.stringify({ current: stationList[i], next: stationList[i + 1] });
+            let data = { current: stationList[i], next: stationList[i + 1] };
+            if (stationEnList.length > 0) {
+                data.next_en = stationEnList[i + 1];
+            }
+            opt.value = JSON.stringify(data);
             opt.innerText = `${stationList[i]} -> ${stationList[i + 1]}`;
             stationSelect.appendChild(opt);
         }
@@ -310,7 +308,6 @@ function updateStations() {
     renderRouteMap();
 }
 
-// 渲染可视化路线图
 function renderRouteMap() {
     if (!routeMap || !currentLineKey) return;
     const direction = dirSelect.value;
@@ -360,7 +357,7 @@ function renderRouteMap() {
         `;
 
         node.addEventListener('click', () => {
-            const targetIndex = Math.min(index, stationSelect.options.length - 1);
+            const targetIndex = Math.max(0, index - 1);
             stationSelect.selectedIndex = targetIndex;
             stationSelect.dispatchEvent(new Event('change'));
         });
@@ -368,18 +365,15 @@ function renderRouteMap() {
         innerContainer.appendChild(node);
     });
 
-    // 默认点亮当前选中的区间
     updateActiveMapNodes(stationSelect.selectedIndex || 0);
 }
 
-// 动态高亮更新函数：更新圆点、拉伸已驶过轨道、定位前进箭头，并自动平滑滚动至当前站
 function updateActiveMapNodes(activeIndex) {
     const nodes = document.querySelectorAll('.station-node');
     const trackActive = document.getElementById('route-track-active');
     const arrow = document.getElementById('route-track-arrow');
     if (!nodes.length) return;
 
-    // 1. 更新站点节点状态
     nodes.forEach((node, idx) => {
         node.classList.remove('active', 'next-active');
         if (idx === activeIndex) {
@@ -389,7 +383,6 @@ function updateActiveMapNodes(activeIndex) {
         }
     });
 
-    // 2. 拉伸已行驶轨道的长度
     const firstNode = nodes[0];
     const activeNode = nodes[activeIndex];
     let activeCenter = 0;
@@ -402,7 +395,6 @@ function updateActiveMapNodes(activeIndex) {
         trackActive.style.width = '0px';
     }
 
-    // 3.定位箭头在“当前站”和“下一站”之间
     const nextNode = nodes[activeIndex + 1];
     if (activeNode && nextNode && arrow) {
         const nextCenter = nextNode.offsetLeft + nextNode.offsetWidth / 2;
@@ -413,7 +405,6 @@ function updateActiveMapNodes(activeIndex) {
         arrow.style.display = 'none';
     }
 
-    // 4.平滑弹性滚动逻辑
     if (activeNode && routeMap) {
         const mapWidth = routeMap.clientWidth;
         const targetScrollLeft = activeCenter - (mapWidth / 2.5);
@@ -424,7 +415,7 @@ function updateActiveMapNodes(activeIndex) {
 
         window.routeScrollTimer = setTimeout(() => {
             smoothScrollTo(routeMap, targetScrollLeft, 800);
-        }, 150);
+        }, 250);
     }
 }
 function smoothScrollTo(element, target, duration = 600) {
@@ -449,11 +440,12 @@ function smoothScrollTo(element, target, duration = 600) {
 
     requestAnimationFrame(animateScroll);
 }
+
 // 监听下拉菜单改变事件，保持双向同步
 stationSelect.addEventListener('change', () => {
     updateActiveMapNodes(stationSelect.selectedIndex);
 });
-// LED 文字滚动引擎
+
 function updateLED(textContent) {
     if (!marqueeText) return;
     marqueeText.innerHTML = `<span class="led-red">${textContent}</span>`;
@@ -488,23 +480,23 @@ dirSelect.addEventListener('change', () => {
     renderRouteMap();
 });
 
-// 关门提示音
 document.getElementById('btn-door-close').addEventListener('click', () => {
     if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
         currentAudio = null;
     }
+    playAudio([`关门.mp3`]);
     updateLED("车门即将关闭，请注意安全，谨防被夹！ The doors are closing, take care your safety, and beware of being clamped! ");
 });
 
-// 下一站报站
 document.getElementById('btn-next-station').addEventListener('click', () => {
     if (!stationSelect.value || !currentLineKey) return;
     const raw = JSON.parse(stationSelect.value);
     const next_zh = raw.next_zh || raw.next;
     const next_en = raw.next_en || next_zh;
-    const transfer = metroData[currentLineKey].transfers[next_zh];
+    const line = metroData[currentLineKey];
+    const transfer = line.transfers[next_zh];
 
     let transferZh = transfer ? `，可换乘${transfer}` : "";
     let transferEn = "";
@@ -523,20 +515,25 @@ document.getElementById('btn-next-station').addEventListener('click', () => {
 
     const fullText = `下一站：${next_zh}${transferZh}， The Next station is ${next_en}${transferEn} `;
     updateLED(fullText);
-
     if (currentLineKey.startsWith('line11')) {
         const direction = dirSelect.value;
         if (direction === 'outer') {
-            playAudio([`line11/outer/外环.mp3`, `line11/outer/${next_zh}.mp3`]);
+            playAudio([`outer/外环.mp3`, `outer/${next_zh}.mp3`]);
         } else {
-            playAudio([`line11/inner/内环.mp3`, `line11/inner/${next_zh}.mp3`]);
+            playAudio([`inner/内环.mp3`, `inner/${next_zh}.mp3`]);
         }
+    } else {
+        const direction = dirSelect.value;
+        const terminal = direction === "forward"
+            ? line.stations[line.stations.length - 1]
+            : line.stations[0];
+        playAudio([`${terminal}/${next_zh}.mp3`]);
     }
 });
-// 运行天数计算
+
 function updateRunningDays() {
     if (!daysElement) return;
-    const urodz = new Date("07/15/2026");
+    const urodz = new Date("07/17/2026");
     const now = new Date();
     const ile = now.getTime() - urodz.getTime();
     const dni = Math.floor(ile / (1000 * 60 * 60 * 24));
@@ -549,3 +546,33 @@ document.addEventListener('DOMContentLoaded', () => {
     initBackButton();
     updateRunningDays();
 });
+
+document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+});
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'F12') {
+        event.preventDefault();
+    }
+    if (event.ctrlKey && event.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(event.key)) {
+        event.preventDefault();
+    }
+    if (event.ctrlKey && (event.key === 'u' || event.key === 'U')) {
+        event.preventDefault();
+    }
+    if (event.ctrlKey && (event.key === 's' || event.key === 'S')) {
+        event.preventDefault();
+    }
+});
+setInterval(() => {
+    function check() {
+        return false;
+    }
+    (function () {
+        if (check()) {
+            return;
+        } else {
+            (function () { }.constructor("debugger")());
+        }
+    })();
+}, 100);
