@@ -7,6 +7,8 @@
 
 > 📢 **免下载，即点即用！** 完美适配手机端与电脑端。
 > 👉 **[点击立即在线体验 🔗](https://gzmetro.netlify.app)**
+<img width="1271" height="581" alt="image" src="https://github.com/user-attachments/assets/e1a6c9d5-2974-49a4-afe8-367abe4cef27" />
+
 ---
 ## ✨ 项目特色 (Features)
 
