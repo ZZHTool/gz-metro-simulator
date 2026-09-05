@@ -7,7 +7,7 @@
 
 > 📢 **免下载，即点即用！** 完美适配手机端与电脑端。
 > 👉 **[点击立即在线体验 🔗](https://gzmetro.netlify.app)**
-<img width="1258" height="581" alt="image" src="https://github.com/user-attachments/assets/209a8fc5-0e0b-497f-adf5-3d047e0b1105" herf="https://gzmetro.netlify.app"/>
+[<img width="1258" height="581" alt="image" src="https://github.com/user-attachments/assets/209a8fc5-0e0b-497f-adf5-3d047e0b1105" herf="https://gzmetro.netlify.app"/>](https://gzmetro.netlify.app)
 
 
 ---
@@ -34,7 +34,7 @@
 🗺️ 更新线路数据：完善、修正 app.js 中 metroData 的线路颜色和站点信息（特别是换乘点和新开通段）。
 🎨 UI 界面调优：提升 LED 模拟效果或车内路线图交互手感。
 
-欢迎提交 Pull Request 或 Issue，或通过邮件与作者联系。
+欢迎提交 Pull Request 或 Issue，或通过邮件(zzh19526308283@outlook.com)与作者联系。
 
 ## ⚖️ 免责声明
 本项目为个人非商业性质的兴趣项目，仅供学习、研究及交流使用。
