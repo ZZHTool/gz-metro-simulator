@@ -144,7 +144,6 @@ if (btnAboutBack && portalView && aboutView) {
     });
 }
 
-// 欢迎页开门特效控制逻辑
 const welcomeScreen = document.getElementById('welcome-screen');
 if (welcomeScreen) {
     welcomeScreen.addEventListener('click', () => {
@@ -163,7 +162,6 @@ if (welcomeScreen) {
     });
 }
 
-// 运行天数计算
 function updateRunningDays() {
     if (!daysElement) return;
     const urodz = new Date("07/17/2026");
@@ -173,7 +171,6 @@ function updateRunningDays() {
     daysElement.textContent = dni >= 0 ? dni : 0;
 }
 
-// 初始化
 document.addEventListener('DOMContentLoaded', () => {
     renderLineGrid();
     updateRunningDays();
@@ -182,29 +179,36 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('contextmenu', (event) => {
     event.preventDefault();
 });
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'F12') {
-        event.preventDefault();
-    }
-    if (event.ctrlKey && event.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(event.key)) {
-        event.preventDefault();
-    }
-    if (event.ctrlKey && (event.key === 'u' || event.key === 'U')) {
-        event.preventDefault();
-    }
-    if (event.ctrlKey && (event.key === 's' || event.key === 'S')) {
-        event.preventDefault();
-    }
-});
-setInterval(() => {
-    function check() {
+document.addEventListener('keydown', function (e) {
+    const keyCode = e.keyCode || e.which || e.charCode;
+    const ctrlKey = e.ctrlKey || e.metaKey;
+    if (keyCode === 123) {
+        e.preventDefault();
         return false;
     }
-    (function () {
-        if (check()) {
-            return;
-        } else {
-            (function () { }.constructor("debugger")());
+    if (ctrlKey && (keyCode === 83 || keyCode === 85 || keyCode === 73)) {
+        e.preventDefault();
+        return false;
+    }
+    if (ctrlKey && e.shiftKey && (keyCode === 67 || keyCode === 74)) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+setInterval(function () {
+    if (document.visibilityState === 'visible') {
+        const startTime = performance.now();
+        (function () { }.constructor("debugger")());
+        const endTime = performance.now();
+        if (endTime - startTime > 500) {
+            window.location.href = "about:blank";
         }
-    })();
-}, 100);
+    }
+}, 3000);
+document.addEventListener('dragstart', (e) => {
+    const forbiddenTags = ['IMG', 'AUDIO', 'VIDEO', 'SVG', 'A'];
+    if (forbiddenTags.includes(e.target.tagName)) {
+        e.preventDefault();
+    }
+});

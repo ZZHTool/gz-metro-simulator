@@ -4,7 +4,7 @@ const metroData = {
         color: "#edcf3b",
         textColor: "#000000",
         stations: ["西塱", "坑口", "花地湾", "芳村", "黄沙", "长寿路", "陈家祠", "西门口", "公园前", "农讲所", "烈士陵园", "东山口", "杨箕", "体育西路", "体育中心", "广州东站"],
-        stations_en: ["Xilang","Kengkou","Huadiwan","Fangcun","Huangsha","Changshou Road","Chen Clan Academy","Ximenkou","Gongyuanqian","Peasant Movement Institute","Martyrs' Park","Dongshankou","Yangji","Tiyu Xilu","Tianhe Sports Center","Guangzhou East Railway Station"],
+        stations_en: ["Xilang", "Kengkou", "Huadiwan", "Fangcun", "Huangsha", "Changshou Road", "Chen Clan Academy", "Ximenkou", "Gongyuanqian", "Peasant Movement Institute", "Martyrs' Park", "Dongshankou", "Yangji", "Tiyu Xilu", "Tianhe Sports Center", "Guangzhou East Railway Station"],
         transfers: { "公园前": "2号线", "黄沙": "6号线", "陈家祠": "8号线", "东山口": "6号线", "杨箕": "5号线", "体育西路": "3号线", "广州东站": "3号线、11号线", "西塱": "10号线、22号线" }
     },
     "line2": {
@@ -40,7 +40,8 @@ const metroData = {
         color: "#c70541",
         textColor: "#ffffff",
         stations: ["滘口", "坦尾", "中山八", "西场", "西村", "广州火车站", "小北", "淘金", "区庄", "动物园", "杨箕", "五羊邨", "珠江新城", "猎德", "潭村", "员村", "科韵路", "车陂南", "东圃", "三溪", "鱼珠", "大沙地", "大沙东", "文冲", "双沙", "庙头", "夏园", "保盈大道", "夏港", "黄埔新港"],
-        transfers: { "坦尾": "6号线", "中山八": "11号线", "西村": "8号线", "广州火车站": "2号线、11号线", "区庄": "6号线", "杨箕": "1号线", "五羊邨": "10号线", "珠江新城": "3号线", "员村": "21号线、11号线", "车陂南": "4号线", "鱼珠": "13号线", "大沙东": "7号线", "夏园": "13号线" }
+        "stations_en": ["Jiaokou", "Tanwei", "Zhongshanba", "Xichang", "Xicun", "Guangzhou Railway Station", "Xiaobei", "Taojin", "Ouzhuang", "The Zoo", "Yangji", "Wuyangcun", "Zhujiang New Town", "Liede", "Tancun", "Yuancun", "Keyun Lu", "Chebeinan", "Dongpu", "Sanxi", "Yuzhu", "Dashadi", "Dashadong", "Wenchong", "Shuangsha", "Miaotou", "Xiayuan", "Baoying Dadao", "Xiagang", "Huangpu New Port"],
+        transfers: { "坦尾": "6号线", "中山八": "11号线", "西村": "8号线", "广州火车站": "2号线", "区庄": "6号线", "杨箕": "1号线", "五羊邨": "10号线", "珠江新城": "3号线", "员村": "11号线", "车陂南": "4号线", "鱼珠": "13号线", "大沙东": "7号线", "夏园": "13号线" }
     },
     "line6": {
         name: "6号线",
@@ -82,8 +83,8 @@ const metroData = {
         color: "#F0B200",
         textColor: "#000000",
         isCircle: true,
-        stations_outer: ["赤沙", "琶洲", "员村", "天河公园", "华景路", "华师", "龙口西", "广州东站", "沙河", "云台花园", "大金钟路", "中医药大学", "梓元岗", "流花", "彩虹桥", "中山八", "如意坊", "芳村", "大冲口", "沙涌", "鹤洞东", "棣园", "燕岗", "江泰路", "五凤", "逸景路", "上涌", "大塘", "龙潭", "赤沙"],
-        stations_outer_en: ["Chisha", "Pazhou", "Yuancun", "Tianhe Park", "Huangjing Road", "South China Normal University", "Longkou West", "Guangzhou East Railway Station", "Shahe", "Yuntai Garden", "Dajinzhong Road", "Guangzhou University of Chinese Medicine", "Ziyuangang", "Liuhua", "Caihongqiao", "Zhongshanba", "Ruyifang", "Shiweitang", "Fangcun", "Dachongkou", "Shachong", "Hedong East", "Diyuan", "Yangang", "Yangang", "Jiangtai Road", "Wufeng", "Yijing Road", "Shangchong", "Datang", "Longtan", "Chisha"],
+        stations_outer: ["赤沙", "琶洲", "员村", "天河公园", "华景路", "华师", "龙口西", "广州东站", "沙河", "云台花园", "大金钟路", "中医药大学", "梓元岗", "流花", "彩虹桥", "中山八", "如意坊", "石围塘", "芳村", "大冲口", "沙涌", "鹤洞东", "棣园", "燕岗", "江泰路", "五凤", "逸景路", "上涌", "大塘", "龙潭", "赤沙"],
+        stations_outer_en: ["Chisha", "Pazhou", "Yuancun", "Tianhe Park", "Huangjing Road", "South China Normal University", "Longkou West", "Guangzhou East Railway Station", "Shahe", "Yuntai Garden", "Dajinzhong Road", "Guangzhou University of Chinese Medicine", "Ziyuangang", "Liuhua", "Caihongqiao", "Zhongshanba", "Ruyifang", "Shiweitang", "Fangcun", "Dachongkou", "Shachong", "Hedong East", "Diyuan", "Yangang", "Jiangtai Road", "Wufeng", "Yijing Road", "Shangchong", "Datang", "Longtan", "Chisha"],
         stations_inner: ["赤沙", "龙潭", "大塘", "上涌", "逸景路", "五凤", "江泰路", "燕岗", "棣园", "鹤洞东", "沙涌", "大冲口", "芳村", "石围塘", "如意坊", "中山八", "彩虹桥", "流花", "梓元岗", "中医药大学", "大金钟路", "云台花园", "沙河", "广州东站", "龙口西", "华师", "华景路", "天河公园", "员村", "琶洲", "赤沙"],
         stations_inner_en: ["Chisha", "Longtan", "Datang", "Shangchong", "Yijing Road", "Wufeng", "Jiangtai Road", "Yangang", "Diyuan", "Hedong East", "Shachong", "Dachongkou", "Fangcun", "Shiweitang", "Ruyifang", "Zhongshanba", "Caihongqiao", "Liuhua", "Ziyuangang", "Guangzhou University of Chinese Medicine", "Dajinzhong Road", "Yuntai Garden", "Shahe", "Guangzhou East Railway Station", "Longkou West", "South China Normal University", "Huajing Road", "Tianhe Park", "Yuancun", "Pazhou", "Chisha"],
         transfers: { "彩虹桥": "8号线", "中山八": "5号线", "如意坊": "6号线", "江泰路": "2号线", "五凤": "10号线", "大塘": "3号线", "龙潭": "18号线", "琶洲": "8号线", "员村": "5号线、21号线", "天河公园": "21号线", "广州东站": "1号线、3号线", "沙河": "6号线", "芳村": "1号线、22号线" }
@@ -114,6 +115,7 @@ const metroData = {
         color: "#0055bc",
         textColor: "#ffffff",
         stations: ["冼村", "磨碟沙", "龙潭", "沙溪", "南村万博", "番禺广场", "横沥", "万顷沙"],
+        stations_en: ["Xiancun", "Modiesha", "Longtan", "Shaxi", "Nancun Wanbo", "Panyu Square", "Hengli", "Wanqingsha"],
         transfers: { "磨碟沙": "8号线、11号线", "龙潭": "11号线", "南村万博": "7号线", "番禺广场": "3号线、22号线" }
     },
     "line21": {
@@ -141,6 +143,267 @@ const simTitle = document.getElementById('sim-title');
 const marqueeText = document.getElementById('marquee-text');
 const routeMap = document.getElementById('route-map');
 const daysElement = document.getElementById('stable-days');
+const audioCache = new Map();
+let cachedToken = null;
+let tokenFetchPromise = null;
+let tokenExpireTime = 0;
+let currentPlayToken = 0;
+let currentFetchController = null;
+let isAudioUnlocked = false;
+
+function unlockAudioContext() {
+    if (isAudioUnlocked) return;
+
+    isAudioUnlocked = true;
+    document.removeEventListener('click', unlockAudioContext);
+    document.removeEventListener('touchstart', unlockAudioContext);
+
+    const silentAudio = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
+    silentAudio.play().catch(() => {
+    });
+}
+
+function refreshAudioToken() {
+    if (cachedToken && Date.now() < tokenExpireTime) {
+        return Promise.resolve(cachedToken);
+    }
+    if (tokenFetchPromise) {
+        return tokenFetchPromise;
+    }
+
+    const fetchStart = Date.now();
+    tokenFetchPromise = fetch('/.netlify/functions/get-audio-token')
+        .then(res => res.ok ? res.json() : { token: '' })
+        .then(data => {
+            cachedToken = data.token;
+            tokenExpireTime = Date.now() + 4000;
+            tokenFetchPromise = null;
+            scheduleTokenRefresh(Date.now() - fetchStart);
+            return data.token;
+        })
+        .catch(() => {
+            cachedToken = '';
+            tokenFetchPromise = null;
+            tokenExpireTime = Date.now() + 1500;
+            scheduleTokenRefresh(0);
+            return '';
+        });
+
+    return tokenFetchPromise;
+}
+
+let tokenRefreshTimer = null;
+function scheduleTokenRefresh(lastFetchMs = 0) {
+    if (tokenRefreshTimer) clearTimeout(tokenRefreshTimer);
+    if (!tokenExpireTime) return;
+    const margin = Math.min(Math.max(lastFetchMs * 1.5, 800), 2000);
+    const delay = Math.max(300, tokenExpireTime - Date.now() - margin);
+    tokenRefreshTimer = setTimeout(() => {
+        cachedToken = null;
+        refreshAudioToken();
+    }, delay);
+}
+
+function getAudioToken(timeoutMs = 1200) {
+    const tokenPromise = refreshAudioToken();
+    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(''), timeoutMs));
+    return Promise.race([tokenPromise, timeoutPromise]);
+}
+
+refreshAudioToken();
+
+function getAudioBlobUrlSync(url) {
+    if (audioCache.has(url)) {
+        return audioCache.get(url);
+    }
+    return null;
+}
+
+const AUDIO_FETCH_TIMEOUT_MS = 3500;
+
+function withTimeoutSignal(externalSignal, timeoutMs) {
+    const timeoutController = new AbortController();
+    const timer = setTimeout(() => timeoutController.abort(), timeoutMs);
+
+    if (externalSignal) {
+        if (externalSignal.aborted) {
+            clearTimeout(timer);
+            timeoutController.abort();
+        } else {
+            externalSignal.addEventListener('abort', () => {
+                clearTimeout(timer);
+                timeoutController.abort();
+            }, { once: true });
+        }
+    }
+
+    return { signal: timeoutController.signal, cancelTimer: () => clearTimeout(timer) };
+}
+
+async function getAudioBlobUrl(url, signal = null) {
+    const cached = getAudioBlobUrlSync(url);
+    if (cached) return cached;
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+        const token = await getAudioToken();
+        if (!token) {
+            // 没拿到 token：服务器必定 403，不必真的发这次请求。
+            if (attempt === 1) {
+                console.warn(`预加载失败 [${url}]: 无法获取有效 token`);
+                return url;
+            }
+            // 强制让下一轮重新走一次完整的 token 请求，而不是复用
+            // 刚刚这次失败/超时的结果。
+            cachedToken = null;
+            tokenExpireTime = 0;
+            continue;
+        }
+
+        const requestUrl = `${url}?token=${encodeURIComponent(token)}`;
+        const { signal: combinedSignal, cancelTimer } = withTimeoutSignal(signal, AUDIO_FETCH_TIMEOUT_MS);
+        try {
+            const response = await fetch(requestUrl, { signal: combinedSignal });
+            cancelTimer();
+            if (response.status === 403 && attempt === 0) {
+                cachedToken = null;
+                tokenExpireTime = 0;
+                continue;
+            }
+            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            audioCache.set(url, blobUrl);
+            return blobUrl;
+        } catch (err) {
+            cancelTimer();
+            if (err.name === 'AbortError' && signal && signal.aborted) return url;
+            if (attempt === 1) {
+                console.warn(`预加载失败 [${url}]:`, err);
+                return url;
+            }
+        }
+    }
+    return url;
+}
+
+async function prefetchCurrentNextAudio() {
+    if (!stationSelect.value || !currentLineKey) return;
+    const raw = JSON.parse(stationSelect.value);
+    const next_zh = raw.next_zh || raw.next;
+    const line = metroData[currentLineKey];
+    const tasks = [];
+    tasks.push(getAudioBlobUrl('关门.mp3'));
+
+    if (currentLineKey.startsWith('line11')) {
+        const direction = dirSelect.value;
+        const prefix = direction === 'outer' ? 'outer' : 'inner';
+        tasks.push(getAudioBlobUrl(`${prefix}/${prefix === 'outer' ? '外环' : '内环'}.mp3`));
+        tasks.push(getAudioBlobUrl(`${prefix}/${next_zh}.mp3`));
+    } else if (currentLineKey === 'line5' || currentLineKey === 'line18') {
+        const direction = dirSelect.value;
+        const terminal = direction === "forward"
+            ? line.stations[line.stations.length - 1]
+            : line.stations[0];
+        if (next_zh === terminal) {
+            tasks.push(getAudioBlobUrl(`${terminal}/${next_zh}.mp3`));
+        } else {
+            tasks.push(getAudioBlobUrl(`${terminal}.mp3`));
+            tasks.push(getAudioBlobUrl(`${terminal}/${next_zh}.mp3`));
+        }
+    } else {
+        const direction = dirSelect.value;
+        const terminal = direction === "forward"
+            ? line.stations[line.stations.length - 1]
+            : line.stations[0];
+        tasks.push(getAudioBlobUrl(`${terminal}/${next_zh}.mp3`));
+    }
+    await Promise.all(tasks);
+}
+
+let nextStationBtnEl = null;
+function setNextStationButtonLoading(loading) {
+    if (!nextStationBtnEl) {
+        nextStationBtnEl = document.getElementById('btn-next-station');
+    }
+    if (!nextStationBtnEl) return;
+    if (loading) {
+        if (!nextStationBtnEl.dataset.originalText) {
+            nextStationBtnEl.dataset.originalText = nextStationBtnEl.textContent;
+        }
+        nextStationBtnEl.classList.add('btn-loading');
+        nextStationBtnEl.textContent = '⏳ 加载中…';
+    } else {
+        nextStationBtnEl.classList.remove('btn-loading');
+        if (nextStationBtnEl.dataset.originalText) {
+            nextStationBtnEl.textContent = nextStationBtnEl.dataset.originalText;
+        }
+    }
+}
+
+async function playAudio(srcs) {
+    currentPlayToken++;
+    const thisToken = currentPlayToken;
+
+    if (currentAudio) {
+        currentAudio.onended = null;
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+    }
+
+    if (currentFetchController) {
+        currentFetchController.abort();
+    }
+    currentFetchController = new AbortController();
+    const currentSignal = currentFetchController.signal;
+
+    const audioQueue = Array.isArray(srcs) ? srcs : [srcs];
+    let currentIndex = 0;
+
+    async function playCurrent() {
+        if (thisToken !== currentPlayToken || currentIndex >= audioQueue.length) return;
+
+        const rawUrl = audioQueue[currentIndex];
+        let playSrc = getAudioBlobUrlSync(rawUrl);
+
+        if (!playSrc) {
+            const showLoading = currentIndex === 0;
+            if (showLoading) setNextStationButtonLoading(true);
+            playSrc = await getAudioBlobUrl(rawUrl, currentSignal);
+            if (showLoading) setNextStationButtonLoading(false);
+        }
+
+        if (thisToken !== currentPlayToken) return;
+
+        currentAudio = new Audio(playSrc);
+        currentAudio.preload = "auto";
+        currentAudio.onended = () => {
+            if (thisToken !== currentPlayToken) return;
+            currentIndex++;
+            playCurrent();
+        };
+
+        const playPromise = currentAudio.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(err => {
+                if (err.name !== 'NotAllowedError' && err.name !== 'AbortError') {
+                    console.warn("播放失败，跳过该段:", err);
+                }
+                if (thisToken === currentPlayToken) {
+                    currentIndex++;
+                    playCurrent();
+                }
+            });
+        }
+
+        if (currentIndex + 1 < audioQueue.length) {
+            getAudioBlobUrl(audioQueue[currentIndex + 1], currentSignal);
+        }
+    }
+
+    playCurrent();
+}
 
 function detectLineFromUrl() {
     const path = window.location.pathname;
@@ -173,32 +436,6 @@ function initBackButton() {
     });
 }
 
-function playAudio(srcs) {
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio.onended = null;
-    }
-    const audioQueue = Array.isArray(srcs) ? srcs : [srcs];
-    let currentIndex = 0;
-    function playNext() {
-        if (currentIndex < audioQueue.length) {
-            currentAudio = new Audio(audioQueue[currentIndex]);
-
-            currentAudio.onended = () => {
-                currentIndex++;
-                playNext();
-            };
-
-            currentAudio.play().catch(err => {
-                console.warn(`音频播放失败 [${audioQueue[currentIndex]}]:`, err);
-                currentIndex++;
-                playNext();
-            });
-        }
-    }
-    playNext();
-}
 
 function initSimulator(lineKey) {
     currentLineKey = lineKey;
@@ -230,7 +467,6 @@ function initSimulator(lineKey) {
         displayScreen.style.borderColor = line.color;
     }
 
-    // 初始化方向下拉菜单
     dirSelect.innerHTML = '';
     if (line.isCircle) {
         let opt1 = document.createElement('option');
@@ -254,9 +490,9 @@ function initSimulator(lineKey) {
     updateStations();
     renderRouteMap();
     updateLED("欢迎乘坐广州地铁！ Welcome to Guangzhou Metro! ");
+    prefetchCurrentNextAudio();
 }
 
-// 更新下拉框的站点列表
 function updateStations() {
     if (!currentLineKey) return;
     const direction = dirSelect.value;
@@ -297,7 +533,7 @@ function updateStations() {
         for (let i = 0; i < stationList.length - 1; i++) {
             let opt = document.createElement('option');
             let data = { current: stationList[i], next: stationList[i + 1] };
-            if (stationEnList.length > 0) {
+            if (stationEnList.length > 0 && stationEnList[i + 1]) {
                 data.next_en = stationEnList[i + 1];
             }
             opt.value = JSON.stringify(data);
@@ -306,6 +542,7 @@ function updateStations() {
         }
     }
     renderRouteMap();
+    prefetchCurrentNextAudio();
 }
 
 function renderRouteMap() {
@@ -325,7 +562,6 @@ function renderRouteMap() {
         }
     }
 
-    // 1. 创建内层画布容器，和底色背景轨道、彩色高亮轨道
     routeMap.innerHTML = `
         <div class="route-map-inner" id="route-map-inner">
             <div class="route-track"></div>
@@ -335,8 +571,6 @@ function renderRouteMap() {
     `;
 
     const innerContainer = document.getElementById('route-map-inner');
-
-    // 2. 动态生成每一个站点节点
     stationList.forEach((stationName, index) => {
         const node = document.createElement('div');
         node.className = 'station-node';
@@ -364,7 +598,6 @@ function renderRouteMap() {
 
         innerContainer.appendChild(node);
     });
-
     updateActiveMapNodes(stationSelect.selectedIndex || 0);
 }
 
@@ -437,47 +670,51 @@ function smoothScrollTo(element, target, duration = 600) {
             requestAnimationFrame(animateScroll);
         }
     }
-
     requestAnimationFrame(animateScroll);
 }
 
-// 监听下拉菜单改变事件，保持双向同步
+// 监听下拉菜单改变事件
 stationSelect.addEventListener('change', () => {
     updateActiveMapNodes(stationSelect.selectedIndex);
+    prefetchCurrentNextAudio();
 });
 
 function updateLED(textContent) {
     if (!marqueeText) return;
+    marqueeText.style.animation = 'none';
     marqueeText.innerHTML = `<span class="led-red">${textContent}</span>`;
 
-    marqueeText.style.animation = 'none';
-    marqueeText.offsetHeight;
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            const containerWidth = marqueeText.parentElement ? marqueeText.parentElement.clientWidth : 600;
+            const textWidth = marqueeText.scrollWidth || marqueeText.offsetWidth;
+            let totalDistance = containerWidth + textWidth;
 
-    let totalDistance = marqueeText.offsetWidth;
+            if (totalDistance === 0) {
+                const containerWidth = 600;
+                let textWidth = 0;
+                for (let i = 0; i < textContent.length; i++) {
+                    textWidth += (textContent.charCodeAt(i) > 255) ? 38 : 19;
+                }
+                totalDistance = containerWidth + textWidth;
+            }
 
-    if (totalDistance === 0) {
-        const containerWidth = 600;
-        let textWidth = 0;
-        for (let i = 0; i < textContent.length; i++) {
-            textWidth += (textContent.charCodeAt(i) > 255) ? 38 : 19;
-        }
-        totalDistance = containerWidth + textWidth;
-    }
+            const speedPixelsPerSecond = 200;
+            const duration = totalDistance / speedPixelsPerSecond;
 
-    const speedPixelsPerSecond = 152;
-    const duration = totalDistance / speedPixelsPerSecond;
-
-    marqueeText.style.animationName = 'ledScroll';
-    marqueeText.style.animationDuration = `${duration}s`;
-    marqueeText.style.animationTimingFunction = 'linear';
-    marqueeText.style.animationIterationCount = 'infinite';
+            marqueeText.style.animationName = 'ledScroll';
+            marqueeText.style.animationDuration = `${duration}s`;
+            marqueeText.style.animationTimingFunction = 'linear';
+            marqueeText.style.animationIterationCount = 'infinite';
+        });
+    });
 }
-
 
 // 方向切换
 dirSelect.addEventListener('change', () => {
     updateStations();
     renderRouteMap();
+    prefetchCurrentNextAudio();
 });
 
 document.getElementById('btn-door-close').addEventListener('click', () => {
@@ -522,6 +759,16 @@ document.getElementById('btn-next-station').addEventListener('click', () => {
         } else {
             playAudio([`inner/内环.mp3`, `inner/${next_zh}.mp3`]);
         }
+    } else if (currentLineKey === 'line5' || currentLineKey === 'line18') {
+        const direction = dirSelect.value;
+        const terminal = direction === "forward"
+            ? line.stations[line.stations.length - 1]
+            : line.stations[0];
+        if (next_zh === terminal) {
+            playAudio([`${terminal}/${next_zh}.mp3`]);
+        } else {
+            playAudio([`${terminal}.mp3`, `${terminal}/${next_zh}.mp3`]);
+        }
     } else {
         const direction = dirSelect.value;
         const terminal = direction === "forward"
@@ -529,11 +776,12 @@ document.getElementById('btn-next-station').addEventListener('click', () => {
             : line.stations[0];
         playAudio([`${terminal}/${next_zh}.mp3`]);
     }
+    prefetchCurrentNextAudio();
 });
 
 function updateRunningDays() {
     if (!daysElement) return;
-    const urodz = new Date("07/17/2026");
+    const urodz = new Date(2026, 6, 17);
     const now = new Date();
     const ile = now.getTime() - urodz.getTime();
     const dni = Math.floor(ile / (1000 * 60 * 60 * 24));
@@ -544,35 +792,114 @@ document.addEventListener('DOMContentLoaded', () => {
     const autoLineKey = detectLineFromUrl();
     initSimulator(autoLineKey);
     initBackButton();
+    autoScaleContainer();
+    document.addEventListener('click', unlockAudioContext, { once: true });
+    document.addEventListener('touchstart', unlockAudioContext, { once: true });
     updateRunningDays();
 });
 
 document.addEventListener('contextmenu', (event) => {
     event.preventDefault();
 });
-document.addEventListener('keydown', (event) => {
-    if (event.key === 'F12') {
-        event.preventDefault();
-    }
-    if (event.ctrlKey && event.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(event.key)) {
-        event.preventDefault();
-    }
-    if (event.ctrlKey && (event.key === 'u' || event.key === 'U')) {
-        event.preventDefault();
-    }
-    if (event.ctrlKey && (event.key === 's' || event.key === 'S')) {
-        event.preventDefault();
-    }
-});
-setInterval(() => {
-    function check() {
+
+document.addEventListener('keydown', function (e) {
+    const keyCode = e.keyCode || e.which || e.charCode;
+    const ctrlKey = e.ctrlKey || e.metaKey;
+    if (keyCode === 123) {
+        e.preventDefault();
         return false;
     }
-    (function () {
-        if (check()) {
-            return;
-        } else {
-            (function () { }.constructor("debugger")());
+    if (ctrlKey && (keyCode === 83 || keyCode === 85 || keyCode === 73)) {
+        e.preventDefault();
+        return false;
+    }
+    if (ctrlKey && e.shiftKey && (keyCode === 67 || keyCode === 74)) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+document.addEventListener('dragstart', (e) => {
+    const forbiddenTags = ['IMG', 'AUDIO', 'VIDEO', 'SVG', 'A'];
+    if (forbiddenTags.includes(e.target.tagName)) {
+        e.preventDefault();
+    }
+});
+
+setInterval(function () {
+    if (document.visibilityState === 'visible') {
+        const startTime = performance.now();
+        (function () { }.constructor("debugger")());
+        const endTime = performance.now();
+        if (endTime - startTime > 500) {
+            window.location.href = "about:blank";
         }
-    })();
-}, 100);
+    }
+}, 3000);
+
+
+function autoScaleContainer() {
+    const container = document.querySelector('.container');
+    if (!container) return;
+    let wrapper = container.parentElement;
+    if (!wrapper || !wrapper.classList.contains('scale-wrapper')) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'scale-wrapper';
+        wrapper.style.margin = '0 auto';
+        wrapper.style.overflow = 'visible';
+        container.parentNode.insertBefore(wrapper, container);
+        wrapper.appendChild(container);
+    }
+
+    const currentWidth = document.documentElement.clientWidth || window.innerWidth;
+    const designWidth = 800;
+    const isRealMobile = currentWidth < 480 ||
+        (/Android|iPhone|iPod|Mobile/i.test(navigator.userAgent) && currentWidth < 600);
+
+    if (isRealMobile) {
+        container.style.cssText = '';
+        container.style.width = '100%';
+        container.style.maxWidth = '100%';
+        container.style.transform = 'none';
+        wrapper.style.width = '100%';
+        wrapper.style.height = 'auto';
+        wrapper.style.borderRadius = '0';
+        wrapper.style.overflow = 'visible';
+        return;
+    }
+
+    let paddingTotal = 24;
+    if (currentWidth > designWidth) {
+        paddingTotal = Math.max(4, 24 - Math.floor((currentWidth - designWidth) * 0.08));
+    }
+
+    const availableWidth = Math.max(currentWidth - paddingTotal, 320);
+    let scale = availableWidth / designWidth;
+    scale = Math.min(scale, 1.15);
+    scale = Math.max(scale, 0.5);
+
+    const visualWidth = Math.min(designWidth * scale, currentWidth);
+
+    wrapper.style.width = visualWidth + 'px';
+    wrapper.style.maxWidth = '100%';
+    wrapper.style.overflow = 'visible';
+
+    container.style.width = designWidth + 'px';
+    container.style.maxWidth = designWidth + 'px';
+    container.style.margin = '0';
+    container.style.transformOrigin = 'left top';
+    container.style.transform = `scale(${scale})`;
+    container.style.height = 'auto';
+
+    const realHeight = container.offsetHeight;
+    const visualHeight = (realHeight + 10) * scale;
+    wrapper.style.height = visualHeight + 'px';
+}
+
+let scaleTimer = null;
+function debouncedAutoScale() {
+    if (scaleTimer) clearTimeout(scaleTimer);
+    scaleTimer = setTimeout(autoScaleContainer, 16);
+}
+
+window.addEventListener('resize', debouncedAutoScale);
