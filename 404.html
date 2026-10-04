@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - 页面未找到 | 广州地铁报站模拟器</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        :root {
+            --bg-color: #f5f6fa;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-sub: #7f8c8d;
+            --accent-red: #c0392b;
+            --primary-blue: #007bff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 40px 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+        }
+
+        .metro-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .error-code {
+            font-size: 64px;
+            font-weight: 800;
+            color: var(--accent-red);
+            line-height: 1;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .error-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .error-desc {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .action-btn {
+            display: inline-block;
+            background-color: var(--primary-blue);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+            .action-btn:hover {
+                background-color: #0056b3;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+            }
+
+        .countdown-tip {
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="/GZMetro.svg" alt="广州地铁" class="metro-icon">
+
+        <div class="error-code">404</div>
+        <h1 class="error-title">前方无站，列车已偏离轨道</h1>
+        <p class="error-desc">
+            抱歉，您访问的线路或页面不存在，请检查地址是否输入正确。
+        </p>
+
+        <a href="/" class="action-btn">返回模拟器首页</a>
+
+        <div class="countdown-tip">
+            <span id="timer">5</span> 秒后将自动返回首页...
+        </div>
+    </div>
+
+    <script>
+        let seconds = 5;
+        const timerEl = document.getElementById('timer');
+
+        const countdown = setInterval(() => {
+            seconds--;
+            if (timerEl) timerEl.textContent = String(seconds);
+
+            if (seconds <= 0) {
+                clearInterval(countdown);
+                window.location.href = '/';
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

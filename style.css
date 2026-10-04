@@ -255,6 +255,8 @@ main {
     padding-left: 100%;
     line-height: 80px;
     will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
 }
 
 @keyframes ledScroll {
@@ -276,7 +278,7 @@ main {
     display: inline-block;
     transform: scale(1, 1);
     transform-origin: left center;
-    text-shadow: 0 0 2px rgba(255, 51, 51, 0.8), 0 0 6px rgba(255, 51, 51, 0.5), 0 0 10px rgba(255, 51, 51, 0.3);
+    text-shadow: 0 0 3px rgba(255, 0, 0, 0.6);
     image-rendering: pixelated;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -887,6 +889,22 @@ main {
     100% {
         opacity: 0.3;
         transform: translate(-50%, -50%) scale(0.9);
+    }
+}
+
+.route-track-arrow.moving {
+    animation: arrowTravel 1s linear infinite;
+    opacity: 1;
+    transition: none;
+}
+
+@keyframes arrowTravel {
+    from {
+        transform: translate(-50%, -50%);
+    }
+
+    to {
+        transform: translate(calc(-50% + var(--arrow-distance)), -50%);
     }
 }
 
