@@ -710,6 +710,12 @@ main {
         color: #ffffff;
     }
 
+    .social-link.bilibili:hover {
+        background-color: #00a1d6;
+        border-color: #00a1d6;
+        color: #ffffff;
+    }
+
     .social-link:active {
         transform: translateY(0);
     }

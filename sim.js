@@ -8,10 +8,8 @@ const marqueeText = document.getElementById('marquee-text');
 const routeMap = document.getElementById('route-map');
 const daysElement = document.getElementById('stable-days');
 const audioCache = new Map();
-let cachedToken = null;
-let tokenFetchPromise = null;
-let tokenExpireTime = 0;
-let currentPlayToken = 0;
+
+let currentPlayToken = 0; // 播放卡号/序号，用于避免快速切换站点时音频串音
 let currentFetchController = null;
 let isAudioUnlocked = false;
 let isRouteArrowMoving = false;
@@ -27,55 +25,6 @@ function unlockAudioContext() {
     silentAudio.play().catch(() => {
     });
 }
-
-function refreshAudioToken() {
-    if (cachedToken && Date.now() < tokenExpireTime) {
-        return Promise.resolve(cachedToken);
-    }
-    if (tokenFetchPromise) {
-        return tokenFetchPromise;
-    }
-
-    const fetchStart = Date.now();
-    tokenFetchPromise = fetch('/.netlify/functions/get-audio-token')
-        .then(res => res.ok ? res.json() : { token: '' })
-        .then(data => {
-            cachedToken = data.token;
-            tokenExpireTime = Date.now() + 4000;
-            tokenFetchPromise = null;
-            scheduleTokenRefresh(Date.now() - fetchStart);
-            return data.token;
-        })
-        .catch(() => {
-            cachedToken = '';
-            tokenFetchPromise = null;
-            tokenExpireTime = Date.now() + 1500;
-            scheduleTokenRefresh(0);
-            return '';
-        });
-
-    return tokenFetchPromise;
-}
-
-let tokenRefreshTimer = null;
-function scheduleTokenRefresh(lastFetchMs = 0) {
-    if (tokenRefreshTimer) clearTimeout(tokenRefreshTimer);
-    if (!tokenExpireTime) return;
-    const margin = Math.min(Math.max(lastFetchMs * 1.5, 800), 2000);
-    const delay = Math.max(300, tokenExpireTime - Date.now() - margin);
-    tokenRefreshTimer = setTimeout(() => {
-        cachedToken = null;
-        refreshAudioToken();
-    }, delay);
-}
-
-function getAudioToken(timeoutMs = 1200) {
-    const tokenPromise = refreshAudioToken();
-    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(''), timeoutMs));
-    return Promise.race([tokenPromise, timeoutPromise]);
-}
-
-refreshAudioToken();
 
 function getAudioBlobUrlSync(url) {
     if (audioCache.has(url)) {
@@ -109,44 +58,22 @@ async function getAudioBlobUrl(url, signal = null) {
     const cached = getAudioBlobUrlSync(url);
     if (cached) return cached;
 
-    for (let attempt = 0; attempt < 2; attempt++) {
-        const token = await getAudioToken();
-        if (!token) {
-            if (attempt === 1) {
-                console.warn(`预加载失败 [${url}]: 无法获取有效 token`);
-                return url;
-            }
-            cachedToken = null;
-            tokenExpireTime = 0;
-            continue;
-        }
+    const { signal: combinedSignal, cancelTimer } = withTimeoutSignal(signal, AUDIO_FETCH_TIMEOUT_MS);
+    try {
+        const response = await fetch(url, { signal: combinedSignal });
+        cancelTimer();
+        if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
 
-        const requestUrl = `${url}?token=${encodeURIComponent(token)}`;
-        const { signal: combinedSignal, cancelTimer } = withTimeoutSignal(signal, AUDIO_FETCH_TIMEOUT_MS);
-        try {
-            const response = await fetch(requestUrl, { signal: combinedSignal });
-            cancelTimer();
-            if (response.status === 403 && attempt === 0) {
-                cachedToken = null;
-                tokenExpireTime = 0;
-                continue;
-            }
-            if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
-
-            const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            audioCache.set(url, blobUrl);
-            return blobUrl;
-        } catch (err) {
-            cancelTimer();
-            if (err.name === 'AbortError' && signal && signal.aborted) return url;
-            if (attempt === 1) {
-                console.warn(`预加载失败 [${url}]:`, err);
-                return url;
-            }
-        }
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        audioCache.set(url, blobUrl);
+        return blobUrl;
+    } catch (err) {
+        cancelTimer();
+        if (err.name === 'AbortError' && signal && signal.aborted) return url;
+        console.warn(`预加载失败 [${url}]:`, err);
+        return url;
     }
-    return url;
 }
 
 async function prefetchCurrentNextAudio() {
@@ -324,7 +251,6 @@ function initBackButton() {
         }
     });
 }
-
 
 function initSimulator(lineKey) {
     currentLineKey = lineKey;
@@ -637,25 +563,29 @@ document.getElementById('btn-door-close').addEventListener('click', () => {
     updateLED("车门即将关闭，请注意安全，谨防被夹！ The doors are closing, take care your safety, and beware of being clamped! ");
 });
 
+function getTransferEnglish(transfer) {
+    const foshanLine = transfer.match(/佛山\s*(\d+)号线/);
+    if (foshanLine) {
+        return `, the interchange with Foshan Line ${foshanLine[1]}`;
+    }
+
+    const lines = transfer.match(/\d+/g) || [];
+    if (lines.length === 0) {
+        return `, the interchange with ${transfer}`;
+    }
+    if (lines.length === 1) {
+        return `, the interchange with Line ${lines[0]}`;
+    }
+    return ", the interchange with " + lines.map(line => `Line ${line}`).join(" and ");
+}
+
 function showThisStationLED(stationZh, stationEn) {
     if (!stationZh || !currentLineKey) return;
     const line = metroData[currentLineKey];
     const transfer = line && line.transfers ? line.transfers[stationZh] : null;
 
     let transferZh = transfer ? `，可换乘${transfer}` : "";
-    let transferEn = "";
-
-    if (transfer) {
-        const lines = transfer.match(/\d+/g) || [];
-
-        if (lines.length === 0) {
-            transferEn = `, the interchange with ${transfer}`;
-        } else if (lines.length === 1) {
-            transferEn = `, the interchange with Line ${lines[0]}`;
-        } else {
-            transferEn = ", the interchange with " + lines.map(line => `Line ${line}`).join(" and ");
-        }
-    }
+    const transferEn = transfer ? getTransferEnglish(transfer) : "";
 
     const enName = stationEn || stationZh;
     const fullText = `本站：${stationZh}${transferZh}， This station is ${enName}${transferEn} `;
@@ -671,19 +601,7 @@ document.getElementById('btn-next-station').addEventListener('click', () => {
     const transfer = line.transfers[next_zh];
 
     let transferZh = transfer ? `，可换乘${transfer}` : "";
-    let transferEn = "";
-
-    if (transfer) {
-        const lines = transfer.match(/\d+/g) || [];
-
-        if (lines.length === 0) {
-            transferEn = `, the interchange with ${transfer}`;
-        } else if (lines.length === 1) {
-            transferEn = `, the interchange with Line ${lines[0]}`;
-        } else {
-            transferEn = ", the interchange with " + lines.map(line => `Line ${line}`).join(" and ");
-        }
-    }
+    const transferEn = transfer ? getTransferEnglish(transfer) : "";
 
     const fullText = `下一站：${next_zh}${transferZh}， The Next station is ${next_en}${transferEn} `;
     updateLED(fullText);
@@ -786,7 +704,6 @@ setInterval(function () {
         }
     }
 }, 3000);
-
 
 function autoScaleContainer() {
     const container = document.querySelector('.container');
