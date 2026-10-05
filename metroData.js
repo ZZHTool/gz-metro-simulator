@@ -5,7 +5,7 @@ const metroData = {
         textColor: "#000000",
         stations: ["西塱", "坑口", "花地湾", "芳村", "黄沙", "长寿路", "陈家祠", "西门口", "公园前", "农讲所", "烈士陵园", "东山口", "杨箕", "体育西路", "体育中心", "广州东站"],
         stations_en: ["Xilang", "Kengkou", "Huadiwan", "Fangcun", "Huangsha", "Changshou Road", "Chen Clan Academy", "Ximenkou", "Gongyuanqian", "Peasant Movement Institute", "Martyrs' Park", "Dongshankou", "Yangji", "Tiyu Xilu", "Tianhe Sports Center", "Guangzhou East Railway Station"],
-        transfers: { "公园前": "2号线", "黄沙": "6号线", "陈家祠": "8号线", "东山口": "6号线", "杨箕": "5号线", "体育西路": "3号线", "广州东站": "3号线、11号线", "西塱": "10号线、22号线、广佛线" }
+        transfers: { "公园前": "2号线", "芳村": "11号线、22号线", "黄沙": "6号线", "陈家祠": "8号线", "东山口": "6号线", "杨箕": "5号线", "体育西路": "3号线", "广州东站": "3号线、11号线", "西塱": "10号线、22号线、广佛线" }
     },
     "line2": {
         name: "2号线",
@@ -96,7 +96,7 @@ const metroData = {
         stations_outer_en: ["Chisha", "Pazhou", "Yuancun", "Tianhe Park", "Huajing Road", "South China Normal University", "Longkou West", "Guangzhou East Railway Station", "Shahe", "Yuntai Garden", "Dajinzhong Road", "Guangzhou University of Chinese Medicine", "Ziyuangang", "Liuhua", "Caihongqiao", "Zhongshanba", "Ruyifang", "Shiweitang", "Fangcun", "Dachongkou", "Shachong", "Hedong East", "Diyuan", "Yangang", "Jiangtai Road", "Wufeng", "Yijing Road", "Shangchong", "Datang", "Longtan", "Chisha"],
         stations_inner: ["赤沙", "龙潭", "大塘", "上涌", "逸景路", "五凤", "江泰路", "燕岗", "棣园", "鹤洞东", "沙涌", "大冲口", "芳村", "石围塘", "如意坊", "中山八", "彩虹桥", "流花", "梓元岗", "中医药大学", "大金钟路", "云台花园", "沙河", "广州东站", "龙口西", "华师", "华景路", "天河公园", "员村", "琶洲", "赤沙"],
         stations_inner_en: ["Chisha", "Longtan", "Datang", "Shangchong", "Yijing Road", "Wufeng", "Jiangtai Road", "Yangang", "Diyuan", "Hedong East", "Shachong", "Dachongkou", "Fangcun", "Shiweitang", "Ruyifang", "Zhongshanba", "Caihongqiao", "Liuhua", "Ziyuangang", "Guangzhou University of Chinese Medicine", "Dajinzhong Road", "Yuntai Garden", "Shahe", "Guangzhou East Railway Station", "Longkou West", "South China Normal University", "Huajing Road", "Tianhe Park", "Yuancun", "Pazhou", "Chisha"],
-        transfers: { "彩虹桥": "8号线", "中山八": "5号线", "如意坊": "6号线", "江泰路": "2号线", "五凤": "10号线", "大塘": "3号线", "龙潭": "18号线", "赤沙": "12号线", "琶洲": "8号线", "员村": "5号线", "天河公园": "13号线、21号线", "广州东站": "1号线、3号线", "沙河": "6号线", "沙涌": "广佛线", "燕岗": "广佛线", "芳村": "1号线、22号线" }
+        transfers: { "彩虹桥": "8号线", "中山八": "5号线", "如意坊": "6号线", "江泰路": "2号线", "五凤": "10号线", "大塘": "3号线", "龙潭": "18号线", "赤沙": "12号线", "琶洲": "8号线", "员村": "5号线", "天河公园": "13号线、21号线", "华师": "3号线", "广州东站": "1号线、3号线", "沙河": "6号线", "沙涌": "广佛线", "燕岗": "广佛线", "芳村": "1号线、22号线" }
     },
     "line12_west": {
         name: "12号线西段",
@@ -144,7 +144,7 @@ const metroData = {
         textColor: "#ffffff",
         stations: ["冼村", "磨碟沙", "龙潭", "沙溪", "南村万博", "番禺广场", "横沥", "万顷沙"],
         stations_en: ["Xiancun", "Modiesha", "Longtan", "Shaxi", "Nancun Wanbo", "Panyu Square", "Hengli", "Wanqingsha"],
-        transfers: { "磨碟沙": "8号线、11号线", "龙潭": "11号线", "南村万博": "7号线", "番禺广场": "3号线、22号线" }
+        transfers: { "磨碟沙": "8号线", "龙潭": "11号线", "南村万博": "7号线", "番禺广场": "3号线、22号线" }
     },
     "line21": {
         name: "21号线",

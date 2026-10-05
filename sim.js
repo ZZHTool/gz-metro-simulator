@@ -11,20 +11,7 @@ const audioCache = new Map();
 
 let currentPlayToken = 0; // 播放卡号/序号，用于避免快速切换站点时音频串音
 let currentFetchController = null;
-let isAudioUnlocked = false;
 let isRouteArrowMoving = false;
-
-function unlockAudioContext() {
-    if (isAudioUnlocked) return;
-
-    isAudioUnlocked = true;
-    document.removeEventListener('click', unlockAudioContext);
-    document.removeEventListener('touchstart', unlockAudioContext);
-
-    const silentAudio = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=");
-    silentAudio.play().catch(() => {
-    });
-}
 
 function getAudioBlobUrlSync(url) {
     if (audioCache.has(url)) {
@@ -130,7 +117,11 @@ function setNextStationButtonLoading(loading) {
     }
 }
 
-async function playAudio(srcs, onEndedCallback) {
+async function playAudio(srcs, onEndedCallback, retryButton = null) {
+    setNextStationButtonLoading(false);
+    if (retryButton && retryButton.dataset.audioOriginalText) {
+        retryButton.textContent = retryButton.dataset.audioOriginalText;
+    }
     setRouteArrowMoving(typeof onEndedCallback === 'function');
     currentPlayToken++;
     const thisToken = currentPlayToken;
@@ -163,16 +154,11 @@ async function playAudio(srcs, onEndedCallback) {
         }
 
         const rawUrl = audioQueue[currentIndex];
-        let playSrc = getAudioBlobUrlSync(rawUrl);
-
-        if (!playSrc) {
-            const showLoading = currentIndex === 0;
-            if (showLoading) setNextStationButtonLoading(true);
-            playSrc = await getAudioBlobUrl(rawUrl, currentSignal);
-            if (showLoading) setNextStationButtonLoading(false);
-        }
-
-        if (thisToken !== currentPlayToken) return;
+        // Never await a fetch before the first play(): mobile Safari/Chrome can
+        // discard the user's activation while an asynchronous request is pending.
+        // Prefetched blob URLs are used when ready; otherwise play the same-origin
+        // file URL directly and let the media element load it.
+        const playSrc = getAudioBlobUrlSync(rawUrl) || rawUrl;
 
         currentAudio = new Audio(playSrc);
         currentAudio.preload = "auto";
@@ -185,9 +171,23 @@ async function playAudio(srcs, onEndedCallback) {
         const playPromise = currentAudio.play();
         if (playPromise !== undefined) {
             playPromise.catch(err => {
-                if (err.name !== 'NotAllowedError' && err.name !== 'AbortError') {
-                    console.warn("播放失败，跳过该段:", err);
+                if (thisToken !== currentPlayToken || err.name === 'AbortError') return;
+
+                if (err.name === 'NotAllowedError') {
+                    // Do not silently skip the whole queue: leave the station
+                    // unchanged and make a fresh user gesture available.
+                    setRouteArrowMoving(false);
+                    setNextStationButtonLoading(false);
+                    const button = retryButton || nextStationBtnEl;
+                    if (button) {
+                        button.dataset.audioOriginalText ||= button.textContent;
+                        button.textContent = '⚠️ 点击重试音频';
+                    }
+                    console.warn('浏览器拒绝了音频播放；请再次点击播放按钮。', err);
+                    return;
                 }
+
+                console.warn("播放失败，跳过该段:", err);
                 if (thisToken === currentPlayToken) {
                     currentIndex++;
                     playCurrent();
@@ -254,6 +254,9 @@ function initBackButton() {
 
 function initSimulator(lineKey) {
     currentLineKey = lineKey;
+    if (!['line1', 'line5', 'line7', 'line11', 'line18'].includes(lineKey)) {
+        alert('当前线路音频正在录入中，敬请期待！');
+    }
     const line = metroData[lineKey];
     simTitle.innerText = line.name;
     document.title = `${line.name} - 广州地铁报站模拟器`;
@@ -548,35 +551,37 @@ function updateLED(textContent) {
 
 // 方向切换
 dirSelect.addEventListener('change', () => {
+    stopAudioPlayback();
     updateStations();
     renderRouteMap();
+    if (stationSelect.value) {
+        const station = JSON.parse(stationSelect.value);
+        const stationZh = station.current_zh || station.current;
+        showThisStationLED(stationZh, station.current_en || stationZh);
+    }
     prefetchCurrentNextAudio();
 });
 
-document.getElementById('btn-door-close').addEventListener('click', () => {
+document.getElementById('btn-door-close').addEventListener('click', (event) => {
     if (currentAudio) {
         currentAudio.pause();
         currentAudio.currentTime = 0;
         currentAudio = null;
     }
-    playAudio([`关门.mp3`]);
+    playAudio([`关门.mp3`], null, event.currentTarget);
     updateLED("车门即将关闭，请注意安全，谨防被夹！ The doors are closing, take care your safety, and beware of being clamped! ");
 });
 
 function getTransferEnglish(transfer) {
-    const foshanLine = transfer.match(/佛山\s*(\d+)号线/);
-    if (foshanLine) {
-        return `, the interchange with Foshan Line ${foshanLine[1]}`;
-    }
+    const transfers = transfer.split(/[、,，]/).map(item => {
+        const foshanLine = item.match(/佛山\s*(\d+)号线/);
+        if (foshanLine) return `Foshan Line ${foshanLine[1]}`;
+        if (item.includes("广佛线")) return "Guangfo Line";
 
-    const lines = transfer.match(/\d+/g) || [];
-    if (lines.length === 0) {
-        return `, the interchange with ${transfer}`;
-    }
-    if (lines.length === 1) {
-        return `, the interchange with Line ${lines[0]}`;
-    }
-    return ", the interchange with " + lines.map(line => `Line ${line}`).join(" and ");
+        const line = item.match(/(\d+)号线/);
+        return line ? `Line ${line[1]}` : item;
+    });
+    return `, the interchange with ${transfers.join(" and ")}`;
 }
 
 function showThisStationLED(stationZh, stationEn) {
@@ -592,7 +597,7 @@ function showThisStationLED(stationZh, stationEn) {
     updateLED(fullText);
 }
 
-document.getElementById('btn-next-station').addEventListener('click', () => {
+document.getElementById('btn-next-station').addEventListener('click', (event) => {
     if (!stationSelect.value || !currentLineKey) return;
     const raw = JSON.parse(stationSelect.value);
     const next_zh = raw.next_zh || raw.next;
@@ -623,26 +628,26 @@ document.getElementById('btn-next-station').addEventListener('click', () => {
     if (currentLineKey.startsWith('line11')) {
         const direction = dirSelect.value;
         if (direction === 'outer') {
-            playAudio([`outer/外环.mp3`, `outer/${next_zh}.mp3`], onAudioEnded);
+            playAudio([`outer/外环.mp3`, `outer/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
         } else {
-            playAudio([`inner/内环.mp3`, `inner/${next_zh}.mp3`], onAudioEnded);
+            playAudio([`inner/内环.mp3`, `inner/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
         }
-    } else if (currentLineKey === 'line5' || currentLineKey === 'line18') {
+    } else if (currentLineKey === 'line1') {
         const direction = dirSelect.value;
         const terminal = direction === "forward"
             ? line.stations[line.stations.length - 1]
             : line.stations[0];
-        if (next_zh === terminal) {
-            playAudio([`${terminal}/${next_zh}.mp3`], onAudioEnded);
-        } else {
-            playAudio([`${terminal}.mp3`, `${terminal}/${next_zh}.mp3`], onAudioEnded);
-        }
+        playAudio([`${terminal}/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
     } else {
         const direction = dirSelect.value;
         const terminal = direction === "forward"
             ? line.stations[line.stations.length - 1]
             : line.stations[0];
-        playAudio([`${terminal}/${next_zh}.mp3`], onAudioEnded);
+        if (next_zh === terminal) {
+            playAudio([`${terminal}/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
+        } else {
+            playAudio([`${terminal}.mp3`, `${terminal}/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
+        }
     }
     prefetchCurrentNextAudio();
 });
@@ -661,8 +666,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initSimulator(autoLineKey);
     initBackButton();
     autoScaleContainer();
-    document.addEventListener('click', unlockAudioContext, { once: true });
-    document.addEventListener('touchstart', unlockAudioContext, { once: true });
     updateRunningDays();
 });
 

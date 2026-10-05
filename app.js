@@ -1,9 +1,12 @@
 // 获取首页所需的 DOM 元素
 const portalView = document.getElementById('portal-view');
 const aboutView = document.getElementById('about-view');
+const lineNetworkView = document.getElementById('line-network-view');
 const lineGrid = document.getElementById('line-grid');
 const btnAbout = document.getElementById('btn-about');
 const btnAboutBack = document.getElementById('btn-about-back');
+const btnLineNetwork = document.getElementById('btn-line-network');
+const btnLineNetworkBack = document.getElementById('btn-line-network-back');
 const daysElement = document.getElementById('stable-days');
 
 // 渲染线路卡片网格
@@ -40,6 +43,32 @@ if (btnAbout && portalView && aboutView) {
 if (btnAboutBack && portalView && aboutView) {
     btnAboutBack.addEventListener("click", () => {
         aboutView.classList.remove("active");
+        portalView.classList.add("active");
+        const footer = document.querySelector('.site-footer');
+        if (footer) {
+            footer.style.display = 'block';
+            setTimeout(() => {
+                footer.classList.add('fade-in');
+            }, 10);
+        }
+    });
+}
+
+if (btnLineNetwork && portalView && lineNetworkView) {
+    btnLineNetwork.addEventListener("click", () => {
+        portalView.classList.remove("active");
+        lineNetworkView.classList.add("active");
+        const footer = document.querySelector('.site-footer');
+        if (footer) {
+            footer.style.display = 'none';
+            footer.classList.remove('fade-in');
+        }
+    });
+}
+
+if (btnLineNetworkBack && portalView && lineNetworkView) {
+    btnLineNetworkBack.addEventListener("click", () => {
+        lineNetworkView.classList.remove("active");
         portalView.classList.add("active");
         const footer = document.querySelector('.site-footer');
         if (footer) {

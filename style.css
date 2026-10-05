@@ -278,16 +278,23 @@ main {
     display: inline-block;
     transform: scale(1, 1);
     transform-origin: left center;
-    text-shadow: 0 0 3px rgba(255, 0, 0, 0.6);
+    text-shadow: 0 0 2px rgba(255, 51, 51, 0.8), 0 0 6px rgba(255, 51, 51, 0.5), 0 0 10px rgba(255, 51, 51, 0.3);
     image-rendering: pixelated;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 /* 关于本站按钮 */
+.intro-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
 .btn-about {
     display: inline-block;
-    margin-top: 15px;
     padding: 10px 24px;
     font-size: 15px;
     font-weight: bold;
@@ -310,6 +317,22 @@ main {
         transform: translateY(0);
         box-shadow: 0 3px 8px rgba(0, 91, 172, 0.2);
     }
+
+.line-network-card {
+    text-align: center;
+}
+
+.line-network-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+.line-network-download {
+    margin-top: 16px;
+    text-decoration: none;
+}
 
 .about-badges {
     display: flex;

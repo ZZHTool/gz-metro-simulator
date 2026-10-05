@@ -54,9 +54,14 @@
                     <span>📱 手机适配</span>
                     <span>🛠️ 免下载</span>
                 </div>
-                <button id="btn-about" class="btn-about">
-                    关于本站
-                </button>
+                <div class="intro-actions">
+                    <button id="btn-line-network" class="btn-about">
+                        地铁线网
+                    </button>
+                    <button id="btn-about" class="btn-about">
+                        关于本站
+                    </button>
+                </div>
             </div>
             <main>
                 <div class="line-grid" id="line-grid">
@@ -75,9 +80,9 @@
                 <section class="about-card">
                     <h2>广州地铁报站模拟器</h2>
                     <div class="about-status-bar">
-                        <span class="version-tag">v1.4</span>
+                        <span class="version-tag">v1.6</span>
                         <span class="status-tag active">运行中</span>
-                        <span class="update-date">最后更新: 2026-09-27</span>
+                        <span class="update-date">最后更新: 2026-10-05</span>
                     </div>
                     <div class="about-badges">
                         <a href="https://github.com/ZZHTool/gz-metro-simulator" target="_blank">
@@ -120,6 +125,14 @@
                     <h3 class="section-title">📅 更新日志</h3>
                     <div class="timeline">
                         <div class="timeline-item">
+                            <span class="timeline-date">2026-10-05</span>
+                            <span class="timeline-desc"><strong>v1.6</strong> - 完成7号线数据录入，修复部分站点数据错误及换乘显示错误问题。</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span class="timeline-date">2026-10-04</span>
+                            <span class="timeline-desc"><strong>v1.5</strong> - 优化动态线路图，增加“本站”LED显示。</span>
+                        </div>
+                        <div class="timeline-item">
                             <span class="timeline-date">2026-09-27</span>
                             <span class="timeline-desc"><strong>v1.4</strong> - 修复了音频播放、预加载等问题。</span>
                         </div>
@@ -133,11 +146,11 @@
                         </div>
                         <div class="timeline-item">
                             <span class="timeline-date">2026-08-20</span>
-                            <span class="timeline-desc"><strong>v1.1</strong> - 完成18号线基础数据录入。</span>
+                            <span class="timeline-desc"><strong>v1.1</strong> - 完成5号线、18号线数据录入。</span>
                         </div>
                         <div class="timeline-item">
                             <span class="timeline-date">2026-08-01</span>
-                            <span class="timeline-desc"><strong>v1.0</strong> - 完成1号线基础数据录入。</span>
+                            <span class="timeline-desc"><strong>v1.0</strong> - 完成1号线数据录入。</span>
                         </div>
                         <div class="timeline-item">
                             <span class="timeline-date">2026-07-17</span>
@@ -182,6 +195,21 @@
                     <p class="about-disclaimer">
                         <strong>免责声明：</strong>本站为个人非商业项目，仅供学习、研究及交流使用，所使用的地铁广播音频为 ZZH 录制，与广州地铁集团有限公司无任何关联。广州地铁名称、标识及相关商标归其权利人所有。
                     </p>
+                </section>
+            </main>
+        </div>
+        <div id="line-network-view" class="view">
+            <header class="main-header">
+                <button id="btn-line-network-back" class="btn-back">
+                    ⬅ 返回首页
+                </button>
+                <img src="GZMetro.svg" class="metro-logo" alt="Guangzhou Metro Logo">
+                <h1>地铁线网</h1>
+            </header>
+            <main>
+                <section class="about-card line-network-card">
+                    <img class="line-network-image" src="广州地铁线网示意图.png" alt="广州地铁线网示意图">
+                    <a class="btn-about line-network-download" href="广州地铁线网示意图.png" download="广州地铁线网示意图.png">下载原图</a>
                 </section>
             </main>
         </div>
