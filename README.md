@@ -6,7 +6,7 @@
 一款基于纯前端（HTML5 / CSS3 / JavaScript）开发的**广州地铁报站模拟器**。专为地铁爱好者打造，还原广州地铁列车广播与 LED 显示屏滚动效果！
 
 > 📢 **免下载，即点即用！** 完美适配手机端与电脑端。
-> 👉 **[点击立即在线体验 🔗](https://gzmetro.netlify.app)**
+> 👉 **[点击立即在线体验 🔗](https://gzmetro.pages.dev)**
 [<img width="1258" height="581" alt="image" src="https://github.com/user-attachments/assets/209a8fc5-0e0b-497f-adf5-3d047e0b1105" herf="https://gzmetro.netlify.app"/>](https://gzmetro.netlify.app)
 
 
