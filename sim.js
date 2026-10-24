@@ -314,7 +314,7 @@ function initBackButton() {
 
 function initSimulator(lineKey) {
     currentLineKey = lineKey;
-    if (!['line1', 'line2', 'line5', 'line7', 'line11', 'line13', 'line18'].includes(lineKey)) {
+    if (!['line1', 'line2', 'line3_tianhe', 'line5', 'line7', 'line11', 'line13', 'line18'].includes(lineKey)) {
         alert('当前线路音频正在录入中，敬请期待！');
     }
     const line = metroData[lineKey];
