@@ -529,7 +529,7 @@ main {
 .welcome-content-box {
     position: absolute;
     top: 50%;
-    left: 50%;
+    left: var(--transfer-anchor, 50%);
     transform: translate(-50%, -50%);
     z-index: 10000;
     text-align: center;
@@ -753,44 +753,70 @@ main {
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
+.route-map-locate {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    padding: 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+}
+
+.route-map-locate:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.route-map-locate svg {
+    width: 100%;
+    height: 100%;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1;
+    stroke-linecap: round;
+}
+
 /* 外层只负责横向滚动 */
 .route-map {
     width: 100%;
     overflow-x: auto;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     will-change: scroll-position;
     contain: layout style paint;
 }
 
 /* 内部弹性盒：强制撑开至所有站点的实际总宽 */
 .route-map-inner {
+    --route-start-space: 0px;
+    --route-end-space: 0px;
     display: flex;
     position: relative;
-    padding: 20px 10px 35px 10px;
+    padding: 42px 10px 28px;
+    padding-left: calc(10px + var(--route-start-space));
+    padding-right: calc(10px + var(--route-end-space));
     min-width: max-content;
 }
 
-/* 自定义滚动条 */
+/* 隐藏 WebKit 浏览器的滚动条，保留横向滚动 */
 .route-map::-webkit-scrollbar {
-    height: 6px;
-}
-
-.route-map::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-}
-
-.route-map::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
+    display: none;
 }
 
 /* 基础底色路线轨道 */
 .route-track {
     position: absolute;
-    top: 32px;
-    left: 55px;
-    right: 55px;
+    top: 49px;
+    left: calc(42px + var(--route-start-space));
+    right: calc(42px + var(--route-end-space));
     height: 6px;
     background-color: #e2e8f0;
     z-index: 1;
@@ -800,8 +826,8 @@ main {
 /* 动态高亮运行轨道 */
 .route-track-active {
     position: absolute;
-    top: 32px;
-    left: 55px;
+    top: 49px;
+    left: calc(42px + var(--route-start-space));
     height: 6px;
     background-color: var(--line-color, #ccc);
     z-index: 1;
@@ -817,9 +843,13 @@ main {
     align-items: center;
     position: relative;
     z-index: 2;
-    min-width: 90px;
+    min-width: 64px;
     cursor: pointer;
     user-select: none;
+}
+
+.station-node.segment-expanded {
+    margin-right: 24px;
 }
 
 /* 站点中心圆点 */
@@ -855,17 +885,22 @@ main {
     box-shadow: 0 0 6px rgba(0,0,0,0.15);
 }
 
-/* 站点标签倾斜排版 */
+/* 站点标签上下交替排布 */
 .station-label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     color: #64748b;
     white-space: nowrap;
     position: absolute;
     top: 24px;
-    transform: rotate(-35deg);
-    transform-origin: top left;
+    left: 50%;
+    transform: translateX(-50%);
     transition: all 0.3s ease;
+}
+
+.station-node--upper .station-label {
+    top: auto;
+    bottom: 25px;
 }
 
 .station-node.active .station-label,
@@ -876,22 +911,52 @@ main {
 
 /* 换乘标识标签 */
 .transfer-tag {
+    display: flex;
+    gap: 2px;
+    z-index: 2;
+    position: absolute;
+    top: auto;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.transfer-tag::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: var(--transfer-anchor, 50%);
+    width: 2px;
+    height: 12px;
+    transform: translateX(-50%);
+    background: var(--transfer-gradient, #cbd5e1);
+    z-index: -1;
+}
+
+.transfer-line-tag {
     font-size: 9px;
-    background-color: #f1f5f9;
-    color: #475569;
-    border: 1px solid #cbd5e1;
+    background-color: var(--transfer-color, #f1f5f9);
+    color: var(--transfer-text-color, #475569);
+    border: 1px solid var(--transfer-color, #cbd5e1);
     border-radius: 4px;
     padding: 1px 4px;
-    position: absolute;
-    top: -20px;
     white-space: nowrap;
-    transform: scale(0.9);
+}
+
+.station-node--upper .transfer-tag {
+    top: 32px;
+    bottom: auto;
+}
+
+.station-node--upper .transfer-tag::before {
+    top: auto;
+    bottom: 100%;
 }
 
 /* 行驶方向的三角形箭头 */
 .route-track-arrow {
     position: absolute;
-    top: 35px;
+    top: 52px;
     width: 0;
     height: 0;
     border-top: 8px solid transparent;
@@ -1029,16 +1094,44 @@ main {
         margin-bottom: 10px;
     }
 
+    .route-map-locate {
+        top: 3px;
+        right: 3px;
+        width: 20px;
+        height: 20px;
+        padding: 3px;
+        border-radius: 4px;
+        opacity: 0.45;
+        transition: opacity 0.2s ease;
+    }
+
+    .route-map-locate:hover,
+    .route-map-locate:focus-visible,
+    .route-map-locate:active {
+        opacity: 1;
+    }
+
     .route-map-inner {
-        padding: 18px 8px 30px 8px;
+        padding: 42px 8px 28px 8px;
+        padding-left: calc(8px + var(--route-start-space));
+        padding-right: calc(8px + var(--route-end-space));
+    }
+
+    .route-track {
+        left: calc(36px + var(--route-start-space));
+        right: calc(36px + var(--route-end-space));
+    }
+
+    .route-track-active {
+        left: calc(36px + var(--route-start-space));
     }
 
     .station-node {
-        min-width: 72px;
+        min-width: 56px;
     }
 
     .station-label {
-        font-size: 11px;
+        font-size: 12px;
     }
 
     .station-dot {
@@ -1047,9 +1140,20 @@ main {
         border-width: 2.5px;
     }
 
-    .transfer-tag {
+    .transfer-line-tag {
         font-size: 8px;
-        top: -18px;
+    }
+
+    .transfer-tag::before {
+        height: 12px;
+    }
+
+    .transfer-tag {
+        bottom: 29px;
+    }
+
+    .station-node--upper .transfer-tag {
+        top: 29px;
     }
 
     .site-footer {
@@ -1068,7 +1172,16 @@ main {
     }
 
     .station-node {
-        min-width: 64px;
+        min-width: 52px;
+    }
+
+    .route-track {
+        left: calc(34px + var(--route-start-space));
+        right: calc(34px + var(--route-end-space));
+    }
+
+    .route-track-active {
+        left: calc(34px + var(--route-start-space));
     }
 
     #sim-title {

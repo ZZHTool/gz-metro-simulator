@@ -8,117 +8,171 @@ const marqueeText = document.getElementById('marquee-text');
 const routeMap = document.getElementById('route-map');
 const daysElement = document.getElementById('stable-days');
 const audioCache = new Map();
+const audioRequests = new Map();
+const AUDIO_CACHE_MAX_ENTRIES = 16;
+const AUDIO_CACHE_MAX_BYTES = 24 * 1024 * 1024;
+let audioCacheBytes = 0;
+let prefetchController = null;
 
-let currentPlayToken = 0; // 播放卡号/序号，用于避免快速切换站点时音频串音
+let currentPlayToken = 0;
 let currentFetchController = null;
 let isRouteArrowMoving = false;
+let routeMapResizeTimer = null;
+const ROUTE_SEGMENT_EXPANSION = 24;
 
 function getAudioBlobUrlSync(url) {
-    if (audioCache.has(url)) {
-        return audioCache.get(url);
-    }
-    return null;
+    const entry = audioCache.get(url);
+    if (!entry) return null;
+    audioCache.delete(url);
+    audioCache.set(url, entry);
+    return entry.blobUrl;
 }
 
 const AUDIO_FETCH_TIMEOUT_MS = 3500;
 
-function withTimeoutSignal(externalSignal, timeoutMs) {
-    const timeoutController = new AbortController();
-    const timer = setTimeout(() => timeoutController.abort(), timeoutMs);
+function cacheAudioBlobUrl(url, blob) {
+    const existing = audioCache.get(url);
+    if (existing) return existing.blobUrl;
+    if (blob.size > AUDIO_CACHE_MAX_BYTES) return null;
 
-    if (externalSignal) {
-        if (externalSignal.aborted) {
-            clearTimeout(timer);
-            timeoutController.abort();
-        } else {
-            externalSignal.addEventListener('abort', () => {
-                clearTimeout(timer);
-                timeoutController.abort();
-            }, { once: true });
+    const blobUrl = URL.createObjectURL(blob);
+    audioCache.set(url, { blobUrl, size: blob.size });
+    audioCacheBytes += blob.size;
+
+    while (audioCache.size > AUDIO_CACHE_MAX_ENTRIES || audioCacheBytes > AUDIO_CACHE_MAX_BYTES) {
+        let oldestUrl = null;
+        for (const [cachedUrl, entry] of audioCache) {
+            if (!currentAudio || currentAudio.src !== entry.blobUrl) {
+                oldestUrl = cachedUrl;
+                break;
+            }
         }
+        if (oldestUrl === null) break;
+
+        const entry = audioCache.get(oldestUrl);
+        audioCache.delete(oldestUrl);
+        audioCacheBytes -= entry.size;
+        URL.revokeObjectURL(entry.blobUrl);
     }
 
-    return { signal: timeoutController.signal, cancelTimer: () => clearTimeout(timer) };
+    return blobUrl;
 }
 
-async function getAudioBlobUrl(url, signal = null) {
+function getAudioBlobUrl(url, signal = null) {
     const cached = getAudioBlobUrlSync(url);
-    if (cached) return cached;
+    if (cached) return Promise.resolve(cached);
+    if (signal && signal.aborted) return Promise.resolve(null);
 
-    const { signal: combinedSignal, cancelTimer } = withTimeoutSignal(signal, AUDIO_FETCH_TIMEOUT_MS);
-    try {
-        const response = await fetch(url, { signal: combinedSignal });
-        cancelTimer();
-        if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
-
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        audioCache.set(url, blobUrl);
-        return blobUrl;
-    } catch (err) {
-        cancelTimer();
-        if (err.name === 'AbortError' && signal && signal.aborted) return url;
-        console.warn(`预加载失败 [${url}]:`, err);
-        return url;
+    let request = audioRequests.get(url);
+    if (!request || request.done || request.controller.signal.aborted) {
+        const controller = new AbortController();
+        request = { controller, consumers: 0, done: false, promise: null };
+        const timer = setTimeout(() => controller.abort(), AUDIO_FETCH_TIMEOUT_MS);
+        audioRequests.set(url, request);
+        request.promise = Promise.resolve()
+            .then(() => fetch(url, { signal: controller.signal }))
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+                return response.blob();
+            })
+            .then(blob => controller.signal.aborted ? null : cacheAudioBlobUrl(url, blob))
+            .catch(err => {
+                if (err.name !== 'AbortError') {
+                    console.warn(`预加载失败 [${url}]:`, err);
+                }
+                return null;
+            })
+            .finally(() => {
+                clearTimeout(timer);
+                request.done = true;
+                if (audioRequests.get(url) === request) {
+                    audioRequests.delete(url);
+                }
+            });
     }
+
+    request.consumers++;
+    return new Promise(resolve => {
+        let released = false;
+        const release = () => {
+            if (released) return;
+            released = true;
+            if (signal) signal.removeEventListener('abort', onAbort);
+            request.consumers--;
+            if (request.consumers === 0 && !request.done) {
+                request.controller.abort();
+            }
+        };
+        const onAbort = () => {
+            release();
+            resolve(null);
+        };
+
+        if (signal) {
+            if (signal.aborted) {
+                onAbort();
+                return;
+            }
+            signal.addEventListener('abort', onAbort, { once: true });
+        }
+
+        request.promise.then(blobUrl => {
+            if (released) return;
+            release();
+            resolve(blobUrl);
+        });
+    });
 }
 
-async function prefetchCurrentNextAudio() {
+
+function prefetchCurrentNextAudio() {
+    if (prefetchController) {
+        prefetchController.abort();
+    }
+
+    prefetchController = new AbortController();
+
     if (!stationSelect.value || !currentLineKey) return;
+
+    const signal = prefetchController.signal;
     const raw = JSON.parse(stationSelect.value);
     const next_zh = raw.next_zh || raw.next;
+
+    if (!next_zh) return;
+
     const line = metroData[currentLineKey];
-    const tasks = [];
-    tasks.push(getAudioBlobUrl('关门.mp3'));
+    const direction = dirSelect.value;
 
     if (currentLineKey.startsWith('line11')) {
-        const direction = dirSelect.value;
         const prefix = direction === 'outer' ? 'outer' : 'inner';
-        tasks.push(getAudioBlobUrl(`${prefix}/${prefix === 'outer' ? '外环' : '内环'}.mp3`));
-        tasks.push(getAudioBlobUrl(`${prefix}/${next_zh}.mp3`));
-    } else if (currentLineKey === 'line5' || currentLineKey === 'line18') {
-        const direction = dirSelect.value;
-        const terminal = direction === "forward"
-            ? line.stations[line.stations.length - 1]
-            : line.stations[0];
-        if (next_zh === terminal) {
-            tasks.push(getAudioBlobUrl(`${terminal}/${next_zh}.mp3`));
-        } else {
-            tasks.push(getAudioBlobUrl(`${terminal}.mp3`));
-            tasks.push(getAudioBlobUrl(`${terminal}/${next_zh}.mp3`));
-        }
-    } else {
-        const direction = dirSelect.value;
-        const terminal = direction === "forward"
-            ? line.stations[line.stations.length - 1]
-            : line.stations[0];
-        tasks.push(getAudioBlobUrl(`${terminal}/${next_zh}.mp3`));
+
+        getAudioBlobUrl(
+            `${prefix}/${prefix === 'outer' ? '外环' : '内环'}.mp3`,
+            signal
+        );
+
+        getAudioBlobUrl(`${prefix}/${next_zh}.mp3`, signal);
+        return;
     }
-    await Promise.all(tasks);
+
+    const terminal = direction === 'forward'
+        ? line.stations[line.stations.length - 1]
+        : line.stations[0];
+
+    if (currentLineKey === 'line1' || currentLineKey === 'line2') {
+        getAudioBlobUrl(`${terminal}/${next_zh}.mp3`, signal);
+        return;
+    }
+
+    if (next_zh !== terminal) {
+        getAudioBlobUrl(`${terminal}.mp3`, signal);
+    }
+
+    getAudioBlobUrl(`${terminal}/${next_zh}.mp3`, signal);
 }
 
-let nextStationBtnEl = null;
-function setNextStationButtonLoading(loading) {
-    if (!nextStationBtnEl) {
-        nextStationBtnEl = document.getElementById('btn-next-station');
-    }
-    if (!nextStationBtnEl) return;
-    if (loading) {
-        if (!nextStationBtnEl.dataset.originalText) {
-            nextStationBtnEl.dataset.originalText = nextStationBtnEl.textContent;
-        }
-        nextStationBtnEl.classList.add('btn-loading');
-        nextStationBtnEl.textContent = '⏳ 加载中…';
-    } else {
-        nextStationBtnEl.classList.remove('btn-loading');
-        if (nextStationBtnEl.dataset.originalText) {
-            nextStationBtnEl.textContent = nextStationBtnEl.dataset.originalText;
-        }
-    }
-}
 
-async function playAudio(srcs, onEndedCallback, retryButton = null) {
-    setNextStationButtonLoading(false);
+function playAudio(srcs, onEndedCallback, retryButton = null) {
     if (retryButton && retryButton.dataset.audioOriginalText) {
         retryButton.textContent = retryButton.dataset.audioOriginalText;
     }
@@ -128,6 +182,7 @@ async function playAudio(srcs, onEndedCallback, retryButton = null) {
 
     if (currentAudio) {
         currentAudio.onended = null;
+        currentAudio.onerror = null;
         currentAudio.pause();
         currentAudio.currentTime = 0;
         currentAudio = null;
@@ -146,53 +201,67 @@ async function playAudio(srcs, onEndedCallback, retryButton = null) {
         if (thisToken !== currentPlayToken) return;
 
         if (currentIndex >= audioQueue.length) {
+            if (currentFetchController && thisToken === currentPlayToken) {
+                currentFetchController.abort();
+                currentFetchController = null;
+            }
+            setRouteArrowMoving(false);
             if (typeof onEndedCallback === 'function') {
-                setRouteArrowMoving(false);
                 onEndedCallback();
             }
             return;
         }
 
         const rawUrl = audioQueue[currentIndex];
-        // Never await a fetch before the first play(): mobile Safari/Chrome can
-        // discard the user's activation while an asynchronous request is pending.
-        // Prefetched blob URLs are used when ready; otherwise play the same-origin
-        // file URL directly and let the media element load it.
         const playSrc = getAudioBlobUrlSync(rawUrl) || rawUrl;
 
-        currentAudio = new Audio(playSrc);
-        currentAudio.preload = "auto";
-        currentAudio.onended = () => {
-            if (thisToken !== currentPlayToken) return;
+        const audio = new Audio(playSrc);
+        currentAudio = audio;
+        audio.preload = "auto";
+        let trackHandled = false;
+
+        const advanceTrack = () => {
+            if (trackHandled || thisToken !== currentPlayToken) return;
+            trackHandled = true;
+            audio.onended = null;
+            audio.onerror = null;
+            if (currentAudio === audio) currentAudio = null;
             currentIndex++;
             playCurrent();
         };
 
-        const playPromise = currentAudio.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(err => {
-                if (thisToken !== currentPlayToken || err.name === 'AbortError') return;
+        audio.onended = advanceTrack;
+        audio.onerror = () => {
+            if (trackHandled || thisToken !== currentPlayToken) return;
+            console.warn(`音频加载失败 [${rawUrl}]，跳过该段。`, audio.error);
+            advanceTrack();
+        };
 
-                if (err.name === 'NotAllowedError') {
-                    // Do not silently skip the whole queue: leave the station
-                    // unchanged and make a fresh user gesture available.
-                    setRouteArrowMoving(false);
-                    setNextStationButtonLoading(false);
-                    const button = retryButton || nextStationBtnEl;
-                    if (button) {
-                        button.dataset.audioOriginalText ||= button.textContent;
-                        button.textContent = '⚠️ 点击重试音频';
-                    }
-                    console.warn('浏览器拒绝了音频播放；请再次点击播放按钮。', err);
-                    return;
-                }
+        const handlePlayError = err => {
+            if (trackHandled || thisToken !== currentPlayToken || err.name === 'AbortError') return;
 
-                console.warn("播放失败，跳过该段:", err);
-                if (thisToken === currentPlayToken) {
-                    currentIndex++;
-                    playCurrent();
+            if (err.name === 'NotAllowedError') {
+                setRouteArrowMoving(false);
+                const button = retryButton || document.getElementById('btn-next-station');
+                if (button) {
+                    button.dataset.audioOriginalText ||= button.textContent;
+                    button.textContent = '⚠️ 点击重试音频';
                 }
-            });
+                console.warn('浏览器拒绝了音频播放；请再次点击播放按钮。', err);
+                return;
+            }
+
+            console.warn(`播放失败 [${rawUrl}]，跳过该段:`, err);
+            advanceTrack();
+        };
+
+        try {
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(handlePlayError);
+            }
+        } catch (err) {
+            handlePlayError(err);
         }
 
         if (currentIndex + 1 < audioQueue.length) {
@@ -213,6 +282,7 @@ function stopAudioPlayback() {
 
     if (currentAudio) {
         currentAudio.onended = null;
+        currentAudio.onerror = null;
         currentAudio.pause();
         currentAudio.currentTime = 0;
         currentAudio = null;
@@ -238,23 +308,13 @@ function initBackButton() {
     if (!btnBack) return;
 
     btnBack.addEventListener('click', () => {
-        const hostname = window.location.hostname;
-        const protocol = window.location.protocol;
-        if (
-            hostname.includes('netlify.app') ||
-            (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1' && protocol !== 'file:')
-        ) {
-            window.location.href = 'https://gzmetro.netlify.app';
-        }
-        else {
-            window.location.href = '../index.html';
-        }
+        window.location.href = '../index.html';
     });
 }
 
 function initSimulator(lineKey) {
     currentLineKey = lineKey;
-    if (!['line1', 'line5', 'line7', 'line11', 'line18'].includes(lineKey)) {
+    if (!['line1', 'line2', 'line5', 'line7', 'line11', 'line13', 'line18'].includes(lineKey)) {
         alert('当前线路音频正在录入中，敬请期待！');
     }
     const line = metroData[lineKey];
@@ -365,9 +425,28 @@ function updateStations() {
             opt.innerText = `${stationList[i]} -> ${stationList[i + 1]}`;
             stationSelect.appendChild(opt);
         }
+        const terminalIndex = stationList.length - 1;
+        const terminalOption = document.createElement('option');
+        const terminalData = {
+            current_zh: stationList[terminalIndex],
+            current: stationList[terminalIndex],
+            terminal: true
+        };
+        if (stationEnList[terminalIndex]) {
+            terminalData.current_en = stationEnList[terminalIndex];
+        }
+        terminalOption.value = JSON.stringify(terminalData);
+        terminalOption.innerText = `${stationList[terminalIndex]} (终点站)`;
+        stationSelect.appendChild(terminalOption);
     }
     renderRouteMap();
-    prefetchCurrentNextAudio();
+}
+
+function getTransferLineData(lineName) {
+    const match = lineName.match(/^(\d+)号线/);
+    if (!match) return null;
+    const prefix = `${match[1]}号线`;
+    return Object.values(metroData).find(line => line.name.replace(/\s/g, '').startsWith(prefix)) || null;
 }
 
 function renderRouteMap() {
@@ -400,12 +479,26 @@ function renderRouteMap() {
         const node = document.createElement('div');
         node.className = 'station-node';
         node.dataset.index = index;
+        node.classList.toggle('station-node--upper', index % 2 === 0);
 
-        const transferInfo = line.transfers[stationName];
-        let transferHTML = '';
-        if (transferInfo) {
-            transferHTML = `<span class="transfer-tag">${transferInfo}</span>`;
-        }
+        const transferRoutes = (line.transfers[stationName] || '')
+            .split(/[、,，]/)
+            .map(name => name.trim())
+            .filter(Boolean)
+            .map(name => ({ name, line: getTransferLineData(name) }));
+        const transferGradient = transferRoutes.map(({ line: transferLine }, transferIndex) => {
+            const start = transferIndex * 100 / transferRoutes.length;
+            const end = (transferIndex + 1) * 100 / transferRoutes.length;
+            return `${transferLine ? transferLine.color : '#cbd5e1'} ${start}% ${end}%`;
+        }).join(', ');
+        const transferHTML = transferRoutes.length
+            ? `<span class="transfer-tag" style="--transfer-gradient: linear-gradient(to bottom, ${transferGradient})">${transferRoutes.map(({ name, line: transferLine }) => {
+                const style = transferLine
+                    ? ` style="--transfer-color: ${transferLine.color}; --transfer-text-color: ${transferLine.textColor};"`
+                    : '';
+                return `<span class="transfer-line-tag"${style}>${name}</span>`;
+            }).join('')}</span>`
+            : '';
 
         node.innerHTML = `
             ${transferHTML}
@@ -414,14 +507,105 @@ function renderRouteMap() {
         `;
 
         node.addEventListener('click', () => {
-            const targetIndex = Math.max(0, index - 1);
+            const targetIndex = index % stationSelect.options.length;
             stationSelect.selectedIndex = targetIndex;
             stationSelect.dispatchEvent(new Event('change'));
         });
 
         innerContainer.appendChild(node);
     });
+
+    const nodeLayouts = [...innerContainer.querySelectorAll('.station-node')].map(node => {
+        const stationLabel = node.querySelector('.station-label');
+        let leftExtent = stationLabel.offsetWidth / 2;
+        let rightExtent = leftExtent;
+        const transferTag = node.querySelector('.transfer-tag');
+
+        if (transferTag) {
+            const transferLabels = [...transferTag.children];
+            const labelWidths = transferLabels.map(label => label.offsetWidth);
+            const totalLabelWidth = labelWidths.reduce((total, width) => total + width, 0);
+            const gap = transferLabels.length > 1
+                ? (transferTag.offsetWidth - totalLabelWidth) / (transferLabels.length - 1)
+                : 0;
+            const centerIndex = transferLabels.length % 2
+                ? Math.floor(transferLabels.length / 2)
+                : null;
+            const transferAnchor = centerIndex === null
+                ? transferTag.offsetWidth / 2
+                : labelWidths.slice(0, centerIndex).reduce((total, width) => total + width, 0)
+                    + gap * centerIndex + labelWidths[centerIndex] / 2;
+
+            transferTag.style.left = `${node.offsetWidth / 2 - transferAnchor}px`;
+            transferTag.style.transform = 'none';
+            transferTag.style.setProperty('--transfer-anchor', `${transferAnchor}px`);
+            leftExtent = Math.max(leftExtent, transferAnchor);
+            rightExtent = Math.max(rightExtent, transferTag.offsetWidth - transferAnchor);
+        }
+
+        return { node, leftExtent, rightExtent };
+    });
+
+    nodeLayouts.forEach((layout, index) => {
+        const nextLayout = nodeLayouts[index + 1];
+        if (!nextLayout) return;
+        const baseGap = (layout.node.offsetWidth + nextLayout.node.offsetWidth) / 2;
+        const requiredGap = layout.rightExtent + nextLayout.leftExtent + 8;
+        const baseMargin = Math.max(0, requiredGap - baseGap);
+        layout.node.dataset.baseMarginRight = baseMargin;
+        layout.node.style.marginRight = `${baseMargin}px`;
+    });
+
+    const firstLayout = nodeLayouts[0];
+    if (firstLayout) {
+        const firstCenter = firstLayout.node.offsetLeft + firstLayout.node.offsetWidth / 2;
+        const startSpace = Math.max(0, firstLayout.leftExtent + 4 - firstCenter);
+        innerContainer.style.setProperty('--route-start-space', `${startSpace}px`);
+    }
+
+    const lastLayout = nodeLayouts[nodeLayouts.length - 1];
+    if (lastLayout) {
+        const lastCenter = lastLayout.node.offsetLeft + lastLayout.node.offsetWidth / 2;
+        const endSpace = Math.max(0, lastLayout.rightExtent + 4 - (innerContainer.clientWidth - lastCenter));
+        innerContainer.style.setProperty('--route-end-space', `${endSpace}px`);
+    }
+
     updateActiveMapNodes(stationSelect.selectedIndex || 0);
+
+    const routeMapWrapper = routeMap.parentElement;
+    if (routeMapWrapper && !routeMapWrapper.querySelector('.route-map-locate')) {
+        const locateButton = document.createElement('button');
+        locateButton.type = 'button';
+        locateButton.className = 'route-map-locate';
+        locateButton.setAttribute('aria-label', '定位到当前区间');
+        locateButton.title = '定位到当前区间';
+        locateButton.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"></circle><circle cx="12" cy="12" r="2"></circle><path d="M12 2v3m0 14v3M2 12h3m14 0h3"></path></svg>';
+        locateButton.addEventListener('click', scrollToActiveRouteSegment);
+        routeMapWrapper.appendChild(locateButton);
+    }
+}
+
+function scrollToActiveRouteSegment() {
+    if (!routeMap) return;
+
+    const nodes = routeMap.querySelectorAll('.station-node');
+    const activeIndex = stationSelect.selectedIndex;
+    const activeNode = nodes[activeIndex];
+    if (!activeNode) return;
+
+    if (window.routeScrollTimer) {
+        clearTimeout(window.routeScrollTimer);
+        window.routeScrollTimer = null;
+    }
+
+    const nextNode = nodes[activeIndex + 1];
+    const activeCenter = activeNode.offsetLeft + activeNode.offsetWidth / 2;
+    const targetCenter = nextNode
+        ? (activeCenter + nextNode.offsetLeft + nextNode.offsetWidth / 2) / 2
+        : activeCenter;
+    const maxScrollLeft = routeMap.scrollWidth - routeMap.clientWidth;
+    const targetScrollLeft = Math.max(0, Math.min(maxScrollLeft, targetCenter - routeMap.clientWidth / 2));
+    smoothScrollTo(routeMap, targetScrollLeft, 600);
 }
 
 function updateActiveMapNodes(activeIndex, shouldScroll = true) {
@@ -431,13 +615,23 @@ function updateActiveMapNodes(activeIndex, shouldScroll = true) {
     if (!nodes.length) return;
 
     nodes.forEach((node, idx) => {
-        node.classList.remove('active', 'next-active');
+        node.classList.remove('active', 'next-active', 'segment-expanded');
         if (idx === activeIndex) {
             node.classList.add('active');
         } else if (idx === activeIndex + 1) {
             node.classList.add('next-active');
         }
+
+        const baseMargin = Number(node.dataset.baseMarginRight || 0);
+        const segmentExpansion = isRouteArrowMoving && idx === activeIndex && idx < nodes.length - 1
+            ? ROUTE_SEGMENT_EXPANSION
+            : 0;
+        node.style.marginRight = `${baseMargin + segmentExpansion}px`;
     });
+
+    if (isRouteArrowMoving && nodes[activeIndex + 1]) {
+        nodes[activeIndex].classList.add('segment-expanded');
+    }
 
     const firstNode = nodes[0];
     const activeNode = nodes[activeIndex];
@@ -455,9 +649,12 @@ function updateActiveMapNodes(activeIndex, shouldScroll = true) {
     if (activeNode && nextNode && arrow) {
         const nextCenter = nextNode.offsetLeft + nextNode.offsetWidth / 2;
         const isMoving = isRouteArrowMoving;
-        const arrowCenter = isMoving ? activeCenter : (activeCenter + nextCenter) / 2;
+        const arrowInset = 23;
+        const arrowDistance = Math.max(0, nextCenter - activeCenter - arrowInset * 2);
+        const arrowStart = activeCenter + arrowInset;
+        const arrowCenter = isMoving ? arrowStart : arrowStart + arrowDistance / 2;
         arrow.style.left = `${arrowCenter}px`;
-        arrow.style.setProperty('--arrow-distance', `${nextCenter - activeCenter}px`);
+        arrow.style.setProperty('--arrow-distance', `${arrowDistance}px`);
         arrow.style.display = 'block';
         arrow.classList.toggle('moving', isMoving);
     } else if (arrow) {
@@ -563,11 +760,6 @@ dirSelect.addEventListener('change', () => {
 });
 
 document.getElementById('btn-door-close').addEventListener('click', (event) => {
-    if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio = null;
-    }
     playAudio([`关门.mp3`], null, event.currentTarget);
     updateLED("车门即将关闭，请注意安全，谨防被夹！ The doors are closing, take care your safety, and beware of being clamped! ");
 });
@@ -586,6 +778,7 @@ function getTransferEnglish(transfer) {
 
 function showThisStationLED(stationZh, stationEn) {
     if (!stationZh || !currentLineKey) return;
+    setRouteArrowMoving(false);
     const line = metroData[currentLineKey];
     const transfer = line && line.transfers ? line.transfers[stationZh] : null;
 
@@ -601,14 +794,25 @@ document.getElementById('btn-next-station').addEventListener('click', (event) =>
     if (!stationSelect.value || !currentLineKey) return;
     const raw = JSON.parse(stationSelect.value);
     const next_zh = raw.next_zh || raw.next;
+    if (!next_zh) {
+        showThisStationLED(raw.current_zh || raw.current, raw.current_en || raw.current_zh || raw.current);
+        return;
+    }
     const next_en = raw.next_en || next_zh;
     const line = metroData[currentLineKey];
     const transfer = line.transfers[next_zh];
 
     let transferZh = transfer ? `，可换乘${transfer}` : "";
     const transferEn = transfer ? getTransferEnglish(transfer) : "";
+    let destinationText = "";
+    if (currentLineKey === 'line13') {
+        const terminalIndex = dirSelect.value === "backward" ? 0 : line.stations.length - 1;
+        const terminalZh = line.stations[terminalIndex];
+        const terminalEn = line.stations_en && line.stations_en[terminalIndex] || terminalZh;
+        destinationText = `终点站：${terminalZh}， The destination of this train is ${terminalEn}。 `;
+    }
 
-    const fullText = `下一站：${next_zh}${transferZh}， The Next station is ${next_en}${transferEn} `;
+    const fullText = `${destinationText}下一站：${next_zh}${transferZh}， The Next station is ${next_en}${transferEn} `;
     updateLED(fullText);
 
     const onAudioEnded = () => {
@@ -625,31 +829,31 @@ document.getElementById('btn-next-station').addEventListener('click', (event) =>
         }
     };
 
-    if (currentLineKey.startsWith('line11')) {
+    if (currentLineKey === 'line11') {
         const direction = dirSelect.value;
         if (direction === 'outer') {
             playAudio([`outer/外环.mp3`, `outer/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
         } else {
             playAudio([`inner/内环.mp3`, `inner/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
         }
-    } else if (currentLineKey === 'line1') {
-        const direction = dirSelect.value;
-        const terminal = direction === "forward"
-            ? line.stations[line.stations.length - 1]
-            : line.stations[0];
-        playAudio([`${terminal}/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
-    } else {
-        const direction = dirSelect.value;
-        const terminal = direction === "forward"
-            ? line.stations[line.stations.length - 1]
-            : line.stations[0];
-        if (next_zh === terminal) {
-            playAudio([`${terminal}/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
-        } else {
-            playAudio([`${terminal}.mp3`, `${terminal}/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
-        }
     }
-    prefetchCurrentNextAudio();
+    else if (currentLineKey === 'line1' || currentLineKey === 'line2') {
+        const direction = dirSelect.value;
+        const terminal = direction === "forward"
+            ? line.stations[line.stations.length - 1]
+            : line.stations[0];
+        const audioQueue = [`${terminal}/${next_zh}.mp3`];
+        playAudio(audioQueue, onAudioEnded, event.currentTarget);
+    }
+    else {
+        const direction = dirSelect.value;
+        const terminal = direction === "forward"
+            ? line.stations[line.stations.length - 1]
+            : line.stations[0];
+        const audioQueue = [`${terminal}/${next_zh}.mp3`];
+        audioQueue.unshift(`${terminal}.mp3`);
+        playAudio(audioQueue, onAudioEnded, event.currentTarget);
+    }
 });
 
 function updateRunningDays() {
@@ -765,4 +969,11 @@ function autoScaleContainer() {
     const visualHeight = (realHeight + 10) * scale;
     wrapper.style.height = visualHeight + 'px';
 }
-window.addEventListener('resize', autoScaleContainer);
+window.addEventListener('resize', () => {
+    autoScaleContainer();
+    clearTimeout(routeMapResizeTimer);
+    routeMapResizeTimer = setTimeout(() => {
+        renderRouteMap();
+        routeMapResizeTimer = null;
+    }, 100);
+});
