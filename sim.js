@@ -1,5 +1,6 @@
 let currentLineKey = "";
 let currentAudio = null;
+let currentAudioButton = null;
 
 const dirSelect = document.getElementById('dir-select');
 const stationSelect = document.getElementById('station-select');
@@ -9,8 +10,8 @@ const routeMap = document.getElementById('route-map');
 const daysElement = document.getElementById('stable-days');
 const audioCache = new Map();
 const audioRequests = new Map();
-const AUDIO_CACHE_MAX_ENTRIES = 16;
-const AUDIO_CACHE_MAX_BYTES = 24 * 1024 * 1024;
+const AUDIO_CACHE_MAX_ENTRIES = 64;
+const AUDIO_CACHE_MAX_BYTES = 64 * 1024 * 1024;
 let audioCacheBytes = 0;
 let prefetchController = null;
 
@@ -28,7 +29,32 @@ function getAudioBlobUrlSync(url) {
     return entry.blobUrl;
 }
 
-const AUDIO_FETCH_TIMEOUT_MS = 3500;
+const AUDIO_FETCH_TIMEOUT_MS = 10000;
+
+function fetchAudioWithToken(url, signal) {
+    const audioUrl = new URL(url, window.location.href);
+    if (audioUrl.origin !== window.location.origin) {
+        return Promise.reject(new Error('音频地址必须与网站同源'));
+    }
+
+    return fetch('/__audio-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: audioUrl.pathname }),
+        signal
+    })
+        .then(response => {
+            if (!response.ok) throw new Error(`Token HTTP Error ${response.status}`);
+            return response.json();
+        })
+        .then(payload => {
+            if (!payload || typeof payload.token !== 'string') {
+                throw new Error('音频 Token 响应无效');
+            }
+            audioUrl.searchParams.set('token', payload.token);
+            return fetch(audioUrl.href, { signal });
+        });
+}
 
 function cacheAudioBlobUrl(url, blob) {
     const existing = audioCache.get(url);
@@ -70,7 +96,7 @@ function getAudioBlobUrl(url, signal = null) {
         const timer = setTimeout(() => controller.abort(), AUDIO_FETCH_TIMEOUT_MS);
         audioRequests.set(url, request);
         request.promise = Promise.resolve()
-            .then(() => fetch(url, { signal: controller.signal }))
+            .then(() => fetchAudioWithToken(url, controller.signal))
             .then(response => {
                 if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
                 return response.blob();
@@ -125,7 +151,40 @@ function getAudioBlobUrl(url, signal = null) {
 }
 
 
-function prefetchCurrentNextAudio() {
+function getTerminalStation(line, direction) {
+    return direction === 'forward'
+        ? line.stations[line.stations.length - 1]
+        : line.stations[0];
+}
+
+function getDirectionAudioPath(lineKey, line, direction, isLine11) {
+    if (isLine11) {
+        const prefix = direction === 'outer' ? 'outer' : 'inner';
+        const loopAnnouncement = prefix === 'outer' ? '外环' : '内环';
+        return `${prefix}/${loopAnnouncement}.mp3`;
+    }
+
+    if (lineKey === 'line1' || lineKey === 'line2') return null;
+    return `${getTerminalStation(line, direction)}.mp3`;
+}
+
+function getNextStationAudioQueue(lineKey, line, direction, nextStation, isLine11) {
+    if (isLine11) {
+        const prefix = direction === 'outer' ? 'outer' : 'inner';
+        return [
+            getDirectionAudioPath(lineKey, line, direction, isLine11),
+            `${prefix}/${nextStation}.mp3`
+        ];
+    }
+
+    const terminal = getTerminalStation(line, direction);
+    const queue = [`${terminal}/${nextStation}.mp3`];
+    const directionAudioPath = getDirectionAudioPath(lineKey, line, direction, isLine11);
+    if (directionAudioPath && nextStation !== terminal) queue.unshift(directionAudioPath);
+    return queue;
+}
+
+function prefetchDirectionAudio() {
     if (prefetchController) {
         prefetchController.abort();
     }
@@ -136,46 +195,60 @@ function prefetchCurrentNextAudio() {
 
     const signal = prefetchController.signal;
     const raw = JSON.parse(stationSelect.value);
-    const next_zh = raw.next_zh || raw.next;
-
-    if (!next_zh) return;
+    const nextStation = raw.next_zh || raw.next;
+    if (!nextStation) return;
 
     const line = metroData[currentLineKey];
-    const direction = dirSelect.value;
-
-    if (currentLineKey.startsWith('line11')) {
-        const prefix = direction === 'outer' ? 'outer' : 'inner';
-
-        getAudioBlobUrl(
-            `${prefix}/${prefix === 'outer' ? '外环' : '内环'}.mp3`,
-            signal
-        );
-
-        getAudioBlobUrl(`${prefix}/${next_zh}.mp3`, signal);
-        return;
-    }
-
-    const terminal = direction === 'forward'
-        ? line.stations[line.stations.length - 1]
-        : line.stations[0];
-
-    if (currentLineKey === 'line1' || currentLineKey === 'line2') {
-        getAudioBlobUrl(`${terminal}/${next_zh}.mp3`, signal);
-        return;
-    }
-
-    if (next_zh !== terminal) {
-        getAudioBlobUrl(`${terminal}.mp3`, signal);
-    }
-
-    getAudioBlobUrl(`${terminal}/${next_zh}.mp3`, signal);
+    const directionAudioPath = getDirectionAudioPath(
+        currentLineKey,
+        line,
+        dirSelect.value,
+        currentLineKey.startsWith('line11')
+    );
+    if (directionAudioPath) getAudioBlobUrl(directionAudioPath, signal);
 }
 
 
-function playAudio(srcs, onEndedCallback, retryButton = null) {
-    if (retryButton && retryButton.dataset.audioOriginalText) {
-        retryButton.textContent = retryButton.dataset.audioOriginalText;
+function restoreAudioButton(button) {
+    if (!button) return;
+    if (button.dataset.audioOriginalText) {
+        button.textContent = button.dataset.audioOriginalText;
     }
+    delete button.dataset.audioPlaying;
+}
+
+function setAudioButtonLoading(button) {
+    if (!button) return;
+    if (!button.dataset.audioOriginalText) {
+        button.dataset.audioOriginalText = button.textContent;
+    }
+    delete button.dataset.audioPlaying;
+    button.textContent = '加载中';
+}
+
+function setAudioButtonPlaying(button) {
+    if (!button) return;
+    button.dataset.audioPlaying = 'true';
+    button.textContent = '⏹ 停止音频';
+}
+
+function stopAudioFromButton(button) {
+    if (currentAudioButton !== button || button.dataset.audioPlaying !== 'true') return false;
+    stopAudioPlayback();
+    return true;
+}
+
+function playAudio(srcs, onEndedCallback, retryButton = null, onPlaybackStart = null) {
+    if (currentAudioButton !== retryButton) {
+        restoreAudioButton(currentAudioButton);
+    }
+    if (retryButton && retryButton.textContent !== '加载中') {
+        restoreAudioButton(retryButton);
+    }
+    if (retryButton) {
+        setAudioButtonLoading(retryButton);
+    }
+    currentAudioButton = retryButton;
     setRouteArrowMoving(typeof onEndedCallback === 'function');
     currentPlayToken++;
     const thisToken = currentPlayToken;
@@ -196,6 +269,19 @@ function playAudio(srcs, onEndedCallback, retryButton = null) {
 
     const audioQueue = Array.isArray(srcs) ? srcs : [srcs];
     let currentIndex = 0;
+    let playbackStarted = false;
+    const audio = new Audio();
+    audio.preload = "auto";
+    currentAudio = audio;
+
+    const notifyPlaybackStarted = () => {
+        if (playbackStarted || thisToken !== currentPlayToken) return;
+        playbackStarted = true;
+        setAudioButtonPlaying(retryButton);
+        if (typeof onPlaybackStart === 'function') {
+            onPlaybackStart();
+        }
+    };
 
     async function playCurrent() {
         if (thisToken !== currentPlayToken) return;
@@ -205,6 +291,9 @@ function playAudio(srcs, onEndedCallback, retryButton = null) {
                 currentFetchController.abort();
                 currentFetchController = null;
             }
+            if (currentAudio === audio) currentAudio = null;
+            restoreAudioButton(retryButton);
+            if (currentAudioButton === retryButton) currentAudioButton = null;
             setRouteArrowMoving(false);
             if (typeof onEndedCallback === 'function') {
                 onEndedCallback();
@@ -213,11 +302,6 @@ function playAudio(srcs, onEndedCallback, retryButton = null) {
         }
 
         const rawUrl = audioQueue[currentIndex];
-        const playSrc = getAudioBlobUrlSync(rawUrl) || rawUrl;
-
-        const audio = new Audio(playSrc);
-        currentAudio = audio;
-        audio.preload = "auto";
         let trackHandled = false;
 
         const advanceTrack = () => {
@@ -225,15 +309,14 @@ function playAudio(srcs, onEndedCallback, retryButton = null) {
             trackHandled = true;
             audio.onended = null;
             audio.onerror = null;
-            if (currentAudio === audio) currentAudio = null;
             currentIndex++;
             playCurrent();
         };
 
         audio.onended = advanceTrack;
+        audio.onplaying = notifyPlaybackStarted;
         audio.onerror = () => {
             if (trackHandled || thisToken !== currentPlayToken) return;
-            console.warn(`音频加载失败 [${rawUrl}]，跳过该段。`, audio.error);
             advanceTrack();
         };
 
@@ -247,21 +330,37 @@ function playAudio(srcs, onEndedCallback, retryButton = null) {
                     button.dataset.audioOriginalText ||= button.textContent;
                     button.textContent = '⚠️ 点击重试音频';
                 }
-                console.warn('浏览器拒绝了音频播放；请再次点击播放按钮。', err);
                 return;
             }
 
-            console.warn(`播放失败 [${rawUrl}]，跳过该段:`, err);
             advanceTrack();
         };
 
-        try {
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(handlePlayError);
+        const startPlayback = playSrc => {
+            if (trackHandled || thisToken !== currentPlayToken) return;
+            if (!playSrc) {
+                advanceTrack();
+                return;
             }
-        } catch (err) {
-            handlePlayError(err);
+
+            audio.src = playSrc;
+            audio.load();
+
+            try {
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(notifyPlaybackStarted).catch(handlePlayError);
+                }
+            } catch (err) {
+                handlePlayError(err);
+            }
+        };
+
+        const cachedAudioUrl = getAudioBlobUrlSync(rawUrl);
+        if (cachedAudioUrl) {
+            startPlayback(cachedAudioUrl);
+        } else {
+            getAudioBlobUrl(rawUrl, currentSignal).then(startPlayback);
         }
 
         if (currentIndex + 1 < audioQueue.length) {
@@ -288,6 +387,8 @@ function stopAudioPlayback() {
         currentAudio = null;
     }
 
+    restoreAudioButton(currentAudioButton);
+    currentAudioButton = null;
     setRouteArrowMoving(false);
 }
 
@@ -314,7 +415,7 @@ function initBackButton() {
 
 function initSimulator(lineKey) {
     currentLineKey = lineKey;
-    if (!['line1', 'line2', 'line3_tianhe', 'line5', 'line7', 'line11', 'line13', 'line18'].includes(lineKey)) {
+    if (!['line1', 'line2', 'line3_tianhe', 'line3_airport', 'line5', 'line7', 'line11', 'line13', 'line18'].includes(lineKey)) {
         alert('当前线路音频正在录入中，敬请期待！');
     }
     const line = metroData[lineKey];
@@ -368,7 +469,7 @@ function initSimulator(lineKey) {
     updateStations();
     renderRouteMap();
     updateLED("欢迎乘坐广州地铁！ Welcome to Guangzhou Metro! ");
-    prefetchCurrentNextAudio();
+    prefetchDirectionAudio();
 }
 
 function updateStations() {
@@ -443,6 +544,11 @@ function updateStations() {
 }
 
 function getTransferLineData(lineName) {
+    const transferLineColors = {
+        'APM线': { color: '#00A9E0', textColor: '#000000' }
+    };
+    if (transferLineColors[lineName]) return transferLineColors[lineName];
+
     const match = lineName.match(/^(\d+)号线/);
     if (!match) return null;
     const prefix = `${match[1]}号线`;
@@ -454,7 +560,11 @@ function renderRouteMap() {
     const direction = dirSelect.value;
     const line = metroData[currentLineKey];
 
-    routeMap.style.setProperty('--line-color', line.color);
+    if (currentLineKey === 'GuangfoLine') {
+        routeMap.style.removeProperty('--line-color');
+    } else {
+        routeMap.style.setProperty('--line-color', line.color);
+    }
 
     let stationList = [];
     if (line.isCircle) {
@@ -703,16 +813,19 @@ function smoothScrollTo(element, target, duration = 600) {
     requestAnimationFrame(animateScroll);
 }
 
+function showSelectedStationLED() {
+    if (!stationSelect.value) return;
+    const station = JSON.parse(stationSelect.value);
+    const stationZh = station.current_zh || station.current;
+    showThisStationLED(stationZh, station.current_en || stationZh);
+}
+
 // 监听下拉菜单改变事件
 stationSelect.addEventListener('change', () => {
     stopAudioPlayback();
     updateActiveMapNodes(stationSelect.selectedIndex);
-    if (stationSelect.value) {
-        const station = JSON.parse(stationSelect.value);
-        const stationZh = station.current_zh || station.current;
-        showThisStationLED(stationZh, station.current_en || stationZh);
-    }
-    prefetchCurrentNextAudio();
+    showSelectedStationLED();
+    prefetchDirectionAudio();
 });
 
 function updateLED(textContent) {
@@ -751,16 +864,14 @@ dirSelect.addEventListener('change', () => {
     stopAudioPlayback();
     updateStations();
     renderRouteMap();
-    if (stationSelect.value) {
-        const station = JSON.parse(stationSelect.value);
-        const stationZh = station.current_zh || station.current;
-        showThisStationLED(stationZh, station.current_en || stationZh);
-    }
-    prefetchCurrentNextAudio();
+    showSelectedStationLED();
+    prefetchDirectionAudio();
 });
 
 document.getElementById('btn-door-close').addEventListener('click', (event) => {
-    playAudio([`关门.mp3`], null, event.currentTarget);
+    const button = event.currentTarget;
+    if (stopAudioFromButton(button)) return;
+    playAudio([`关门.mp3`], null, button);
     updateLED("车门即将关闭，请注意安全，谨防被夹！ The doors are closing, take care your safety, and beware of being clamped! ");
 });
 
@@ -769,6 +880,7 @@ function getTransferEnglish(transfer) {
         const foshanLine = item.match(/佛山\s*(\d+)号线/);
         if (foshanLine) return `Foshan Line ${foshanLine[1]}`;
         if (item.includes("广佛线")) return "Guangfo Line";
+        if (item.includes("APM线")) return "APM Line";
 
         const line = item.match(/(\d+)号线/);
         return line ? `Line ${line[1]}` : item;
@@ -791,6 +903,8 @@ function showThisStationLED(stationZh, stationEn) {
 }
 
 document.getElementById('btn-next-station').addEventListener('click', (event) => {
+    const button = event.currentTarget;
+    if (stopAudioFromButton(button)) return;
     if (!stationSelect.value || !currentLineKey) return;
     const raw = JSON.parse(stationSelect.value);
     const next_zh = raw.next_zh || raw.next;
@@ -809,11 +923,13 @@ document.getElementById('btn-next-station').addEventListener('click', (event) =>
         const terminalIndex = dirSelect.value === "backward" ? 0 : line.stations.length - 1;
         const terminalZh = line.stations[terminalIndex];
         const terminalEn = line.stations_en && line.stations_en[terminalIndex] || terminalZh;
-        destinationText = `终点站：${terminalZh}， The destination of this train is ${terminalEn}。 `;
+        destinationText = `终点站：${terminalZh}， The destination of this train is ${terminalEn} `;
     }
 
     const fullText = `${destinationText}下一站：${next_zh}${transferZh}， The Next station is ${next_en}${transferEn} `;
-    updateLED(fullText);
+    const onPlaybackStart = () => updateLED(fullText);
+    setAudioButtonLoading(button);
+    updateLED('');
 
     const onAudioEnded = () => {
         if (stationSelect.selectedIndex < stationSelect.options.length - 1) {
@@ -829,31 +945,14 @@ document.getElementById('btn-next-station').addEventListener('click', (event) =>
         }
     };
 
-    if (currentLineKey === 'line11') {
-        const direction = dirSelect.value;
-        if (direction === 'outer') {
-            playAudio([`outer/外环.mp3`, `outer/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
-        } else {
-            playAudio([`inner/内环.mp3`, `inner/${next_zh}.mp3`], onAudioEnded, event.currentTarget);
-        }
-    }
-    else if (currentLineKey === 'line1' || currentLineKey === 'line2') {
-        const direction = dirSelect.value;
-        const terminal = direction === "forward"
-            ? line.stations[line.stations.length - 1]
-            : line.stations[0];
-        const audioQueue = [`${terminal}/${next_zh}.mp3`];
-        playAudio(audioQueue, onAudioEnded, event.currentTarget);
-    }
-    else {
-        const direction = dirSelect.value;
-        const terminal = direction === "forward"
-            ? line.stations[line.stations.length - 1]
-            : line.stations[0];
-        const audioQueue = [`${terminal}/${next_zh}.mp3`];
-        audioQueue.unshift(`${terminal}.mp3`);
-        playAudio(audioQueue, onAudioEnded, event.currentTarget);
-    }
+    const audioQueue = getNextStationAudioQueue(
+        currentLineKey,
+        line,
+        dirSelect.value,
+        next_zh,
+        currentLineKey === 'line11'
+    );
+    playAudio(audioQueue, onAudioEnded, button, onPlaybackStart);
 });
 
 function updateRunningDays() {
