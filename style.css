@@ -499,116 +499,253 @@ main {
     color: #94a3b8;
 }
 
-.welcome-screen {
+.page-loader {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
-    overflow: hidden;
-    cursor: pointer;
-    background-color: white;
-    perspective: 1200px;
-    transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1);
-    min-width: 350px;
-}
-
-    .welcome-screen.opened {
-        pointer-events: none;
-        opacity: 0;
-    }
-
-/* 欢迎页文字排版 */
-.welcome-content-box {
-    position: absolute;
-    top: 50%;
-    left: var(--transfer-anchor, 50%);
-    transform: translate(-50%, -50%);
-    z-index: 10000;
-    text-align: center;
-    pointer-events: none;
+    inset: 0;
+    z-index: 10001;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
+    justify-content: center;
+    gap: 20px;
+    overflow: hidden;
+    min-width: 0;
+    color: #ffffff;
+    cursor: default;
+    background: radial-gradient(ellipse at 50% 44%, rgba(66, 160, 219, 0.26), transparent 48%), linear-gradient(135deg, #041b33 0%, #005bac 56%, #072342 100%);
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.35s ease, visibility 0s linear 0.35s;
 }
 
-/* 1. 图标动画 */
-.welcome-logo-center {
-    width: 120px;
-    height: 120px;
-    object-fit: contain;
-    animation: logoMoveUp 0.25s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-    animation-delay: 0.15s;
-}
-
-/* 2. 文字动画 */
-.welcome-text-animated {
+.page-loader::before {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(78vw, 620px);
+    aspect-ratio: 1;
+    border: 1px solid rgba(190, 229, 255, 0.16);
+    border-radius: 50%;
+    box-shadow: 0 0 0 34px rgba(190, 229, 255, 0.035), 0 0 0 76px rgba(190, 229, 255, 0.025);
+    content: "";
     opacity: 0;
-    margin-top: 15px;
-    transform: translateY(20px);
-    animation: textFadeInUp 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-    animation-delay: 0.25s;
+    transform: translate(-50%, -50%) scale(0.84);
 }
 
-/* 图标向上位移 */
-@keyframes logoMoveUp {
-    from {
-        transform: translateY(0);
-    }
+.page-loader::after {
+    position: absolute;
+    right: 12%;
+    bottom: 17%;
+    left: 12%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(156, 226, 255, 0.65), transparent);
+    box-shadow: 0 0 14px rgba(111, 204, 255, 0.55);
+    content: "";
+    opacity: 0;
+    transform: scaleX(0);
+}
 
+.page-loader.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.page-loader.is-visible::before {
+    animation: welcomeHalo 0.8s ease-out both;
+}
+
+.page-loader.is-visible::after {
+    animation: welcomeTrack 0.5s ease-out 0.1s both;
+}
+
+.loader-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.loader-spinner {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: #9ce2ff;
+    border-radius: 50%;
+    box-shadow: 0 0 28px rgba(111, 204, 255, 0.28);
+    animation: loaderSpin 0.9s linear infinite;
+}
+
+.loader-spinner::after {
+    position: absolute;
+    inset: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    content: "";
+}
+
+.loader-label {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 13px;
+    letter-spacing: 0.14em;
+}
+
+@keyframes loaderSpin {
     to {
-        transform: translateY(-20px);
+        transform: rotate(360deg);
     }
 }
 
-/* 文字渐显并上浮 */
-@keyframes textFadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
+.welcome-content-box {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 720px);
+    padding: 0 18px;
+    box-sizing: border-box;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+}
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.page-loader.is-visible .welcome-content-box {
+    animation: welcomeContentReveal 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.welcome-logo-center {
+    width: 110px;
+    height: 110px;
+    margin-bottom: 18px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.22));
+    opacity: 0;
+    transform: scale(0.72) rotate(-10deg);
+}
+
+.page-loader.is-visible .welcome-logo-center {
+    animation: welcomeLogoReveal 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.welcome-text-animated {
+    margin-top: 4px;
+    opacity: 0;
+    transform: translateY(16px);
+}
+
+.page-loader.is-visible .welcome-text-animated {
+    animation: welcomeTextReveal 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.welcome-kicker {
+    margin: 0 0 10px;
+    color: #9ce2ff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
 }
 
 .welcome-title {
-    font-size: 28px;
-    color: #2c3e50;
-    margin: 0 0 14px 0;
-    font-weight: bold;
-    letter-spacing: 3px;
+    margin: 0 0 12px;
+    color: #ffffff;
+    font-size: clamp(24px, 5vw, 36px);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.24);
 }
 
 .welcome-prompt {
-    font-size: 15px;
-    color: #7f8c8d;
-    letter-spacing: 2px;
-    animation: welcomePulse 1.5s infinite alternate ease-in-out;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 14px;
+    letter-spacing: 0.16em;
 }
 
-/* 提示文字呼吸灯特效 */
-@keyframes welcomePulse {
+@keyframes welcomeHalo {
+    18% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 0.45;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes welcomeTrack {
+    55% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.65;
+        transform: scaleX(1);
+    }
+}
+
+@keyframes welcomeContentReveal {
     0% {
-        opacity: 0.3;
-        transform: scale(0.97);
+        opacity: 0;
+        transform: translateY(18px) scale(0.97);
+    }
+
+    20%,
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes welcomeLogoReveal {
+    0% {
+        opacity: 0;
+        transform: scale(0.72) rotate(-10deg);
+    }
+
+    75% {
+        opacity: 1;
+        transform: scale(1.06) rotate(2deg);
     }
 
     100% {
         opacity: 1;
-        transform: scale(1.03);
+        transform: scale(1) rotate(0);
     }
 }
 
-/* 触发开门状态时的样式 */
-.welcome-screen.opened .welcome-content-box {
-    opacity: 0;
-    transform: translate(-50%, -20%) scale(0.8);
-    transition: opacity 0.5s ease, transform 0.7s ease;
+@keyframes welcomeTextReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-height: 420px) {
+    .page-loader {
+        gap: 12px;
+    }
+
+    .welcome-logo-center {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 10px;
+    }
+
+    .welcome-title {
+        margin-bottom: 8px;
+        font-size: clamp(22px, 5vh, 30px);
+    }
+
+    .loader-content {
+        gap: 8px;
+    }
+
+    .loader-spinner {
+        width: 36px;
+        height: 36px;
+    }
 }
 
 .site-footer {
@@ -1195,10 +1332,6 @@ main {
     body {
         margin: 0;
         padding: 6px;
-    }
-
-    .welcome-screen {
-        min-width: 0;
     }
 
     .container:has(#portal-view.active) {

@@ -1,6 +1,7 @@
 let currentLineKey = "";
 let currentAudio = null;
 let currentAudioButton = null;
+let currentAudioRetry = null;
 
 const dirSelect = document.getElementById('dir-select');
 const stationSelect = document.getElementById('station-select');
@@ -214,7 +215,9 @@ function restoreAudioButton(button) {
     if (button.dataset.audioOriginalText) {
         button.textContent = button.dataset.audioOriginalText;
     }
+    delete button.dataset.audioLoading;
     delete button.dataset.audioPlaying;
+    delete button.dataset.audioRetry;
 }
 
 function setAudioButtonLoading(button) {
@@ -222,12 +225,14 @@ function setAudioButtonLoading(button) {
     if (!button.dataset.audioOriginalText) {
         button.dataset.audioOriginalText = button.textContent;
     }
+    button.dataset.audioLoading = 'true';
     delete button.dataset.audioPlaying;
     button.textContent = '加载中';
 }
 
 function setAudioButtonPlaying(button) {
     if (!button) return;
+    delete button.dataset.audioLoading;
     button.dataset.audioPlaying = 'true';
     button.textContent = '⏹ 停止音频';
 }
@@ -235,6 +240,20 @@ function setAudioButtonPlaying(button) {
 function stopAudioFromButton(button) {
     if (currentAudioButton !== button || button.dataset.audioPlaying !== 'true') return false;
     stopAudioPlayback();
+    return true;
+}
+
+function isAudioButtonLoading(button) {
+    return currentAudioButton === button && button.dataset.audioLoading === 'true';
+}
+
+function retryAudioFromButton(button) {
+    if (currentAudioButton !== button || button.dataset.audioRetry !== 'true' || !currentAudioRetry) return false;
+
+    const retry = currentAudioRetry;
+    currentAudioRetry = null;
+    delete button.dataset.audioRetry;
+    retry();
     return true;
 }
 
@@ -249,6 +268,7 @@ function playAudio(srcs, onEndedCallback, retryButton = null, onPlaybackStart = 
         setAudioButtonLoading(retryButton);
     }
     currentAudioButton = retryButton;
+    currentAudioRetry = null;
     setRouteArrowMoving(typeof onEndedCallback === 'function');
     currentPlayToken++;
     const thisToken = currentPlayToken;
@@ -275,9 +295,10 @@ function playAudio(srcs, onEndedCallback, retryButton = null, onPlaybackStart = 
     currentAudio = audio;
 
     const notifyPlaybackStarted = () => {
-        if (playbackStarted || thisToken !== currentPlayToken) return;
-        playbackStarted = true;
+        if (thisToken !== currentPlayToken) return;
         setAudioButtonPlaying(retryButton);
+        if (playbackStarted) return;
+        playbackStarted = true;
         if (typeof onPlaybackStart === 'function') {
             onPlaybackStart();
         }
@@ -292,6 +313,7 @@ function playAudio(srcs, onEndedCallback, retryButton = null, onPlaybackStart = 
                 currentFetchController = null;
             }
             if (currentAudio === audio) currentAudio = null;
+            currentAudioRetry = null;
             restoreAudioButton(retryButton);
             if (currentAudioButton === retryButton) currentAudioButton = null;
             setRouteArrowMoving(false);
@@ -307,6 +329,8 @@ function playAudio(srcs, onEndedCallback, retryButton = null, onPlaybackStart = 
         const advanceTrack = () => {
             if (trackHandled || thisToken !== currentPlayToken) return;
             trackHandled = true;
+            currentAudioRetry = null;
+            if (retryButton) delete retryButton.dataset.audioRetry;
             audio.onended = null;
             audio.onerror = null;
             currentIndex++;
@@ -327,8 +351,25 @@ function playAudio(srcs, onEndedCallback, retryButton = null, onPlaybackStart = 
                 setRouteArrowMoving(false);
                 const button = retryButton || document.getElementById('btn-next-station');
                 if (button) {
+                    delete button.dataset.audioLoading;
                     button.dataset.audioOriginalText ||= button.textContent;
+                    button.dataset.audioRetry = 'true';
                     button.textContent = '⚠️ 点击重试音频';
+                    currentAudioRetry = () => {
+                        if (thisToken !== currentPlayToken || trackHandled) return;
+                        setRouteArrowMoving(typeof onEndedCallback === 'function');
+                        setAudioButtonLoading(retryButton);
+                        try {
+                            const playPromise = audio.play();
+                            if (playPromise !== undefined) {
+                                playPromise.then(notifyPlaybackStarted).catch(handlePlayError);
+                            } else {
+                                notifyPlaybackStarted();
+                            }
+                        } catch (retryError) {
+                            handlePlayError(retryError);
+                        }
+                    };
                 }
                 return;
             }
@@ -373,6 +414,7 @@ function playAudio(srcs, onEndedCallback, retryButton = null, onPlaybackStart = 
 
 function stopAudioPlayback() {
     currentPlayToken++;
+    currentAudioRetry = null;
 
     if (currentFetchController) {
         currentFetchController.abort();
@@ -870,7 +912,7 @@ dirSelect.addEventListener('change', () => {
 
 document.getElementById('btn-door-close').addEventListener('click', (event) => {
     const button = event.currentTarget;
-    if (stopAudioFromButton(button)) return;
+    if (retryAudioFromButton(button) || stopAudioFromButton(button) || isAudioButtonLoading(button)) return;
     playAudio([`关门.mp3`], null, button);
     updateLED("车门即将关闭，请注意安全，谨防被夹！ The doors are closing, take care your safety, and beware of being clamped! ");
 });
@@ -904,7 +946,7 @@ function showThisStationLED(stationZh, stationEn) {
 
 document.getElementById('btn-next-station').addEventListener('click', (event) => {
     const button = event.currentTarget;
-    if (stopAudioFromButton(button)) return;
+    if (retryAudioFromButton(button) || stopAudioFromButton(button) || isAudioButtonLoading(button)) return;
     if (!stationSelect.value || !currentLineKey) return;
     const raw = JSON.parse(stationSelect.value);
     const next_zh = raw.next_zh || raw.next;
